@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- عمود الرأس -->
+  <rect x="28" y="0" width="8" height="64" fill="#D97706" />
+  
+  <!-- العمود الأفقي -->
+  <rect x="0" y="28" width="64" height="8" fill="#D97706" />
+  
+  <!-- العمود القصير العلوي -->
+  <rect x="24" y="8" width="16" height="8" fill="#D97706" />
+
+  <!-- العمود القصير السفلي -->
+  <rect x="24" y="48" width="16" height="8" fill="#D97706" />
+
+  <!-- العمود القصير الأفقي الأيسر -->
+  <rect x="0" y="24" width="8" height="16" fill="#D97706" />
+
+  <!-- العمود القصير الأفقي الأيمن -->
+  <rect x="56" y="24" width="8" height="16" fill="#D97706" />
+</svg>
