@@ -26,7 +26,9 @@ export default function AdminTopicsIndex({ topics, filters }: PageProps) {
     const [selectedSort, setSelectedSort] = useState(filters.sort || 'name');
     const [showFilters, setShowFilters] = useState(false);
 
-    const { delete: destroy, processing } = useForm();
+    const { delete: post, processing } = useForm({
+        _method: 'DELETE',
+    });
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
@@ -47,7 +49,7 @@ export default function AdminTopicsIndex({ topics, filters }: PageProps) {
 
     const handleDelete = (id: number) => {
         if (confirm('Are you sure you want to delete this topic? This action cannot be undone.')) {
-            destroy(route('admin.topics.destroy', id));
+            post(route('admin.topics.destroy', id));
         }
     };
 
@@ -246,8 +248,8 @@ export default function AdminTopicsIndex({ topics, filters }: PageProps) {
                             <Tag className="mx-auto h-12 w-12 text-gray-400" />
                             <h3 className="mt-2 text-sm font-medium text-gray-900">No topics found</h3>
                             <p className="mt-1 text-sm text-gray-500">
-                                {searchQuery || selectedSort !== 'name' 
-                                    ? 'Try adjusting your search or filters.' 
+                                {searchQuery || selectedSort !== 'name'
+                                    ? 'Try adjusting your search or filters.'
                                     : 'Get started by creating your first topic category.'
                                 }
                             </p>

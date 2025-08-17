@@ -45,7 +45,7 @@ interface PageProps {
 export default function AdminQuestionsEdit({ question, bibleBooks, topics }: PageProps) {
     const [showPreview, setShowPreview] = useState(false);
 
-    const { data, setData, put, processing, errors } = useForm({
+    const { data, setData, post, processing, errors } = useForm({
         question_ar: question.question_ar,
         question_en: question.question_en,
         answer_ar: question.answer_ar || '',
@@ -55,11 +55,13 @@ export default function AdminQuestionsEdit({ question, bibleBooks, topics }: Pag
         topic_id: question.topic_id || '',
         chapter_verse: question.chapter_verse || '',
         status: question.status,
+        _method: 'PUT',
+
     });
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        put(route('admin.questions.update', question.id));
+        post(route('admin.questions.update', question.id));
     };
 
     const getLocalizedName = (item: { name_ar: string; name_en: string }) => {
@@ -130,7 +132,7 @@ export default function AdminQuestionsEdit({ question, bibleBooks, topics }: Pag
                                 {/* Question Section */}
                                 <div className="bg-white shadow rounded-lg p-6">
                                     <h3 className="text-lg font-medium text-gray-900 mb-4">Question Details</h3>
-                                    
+
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
                                             <label htmlFor="question_ar" className="block text-sm font-medium text-gray-700 mb-2">
@@ -171,7 +173,7 @@ export default function AdminQuestionsEdit({ question, bibleBooks, topics }: Pag
                                 {/* Answer Section */}
                                 <div className="bg-white shadow rounded-lg p-6">
                                     <h3 className="text-lg font-medium text-gray-900 mb-4">Answer</h3>
-                                    
+
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
                                             <label htmlFor="answer_ar" className="block text-sm font-medium text-gray-700 mb-2">
@@ -232,7 +234,7 @@ export default function AdminQuestionsEdit({ question, bibleBooks, topics }: Pag
                                 {/* Categories Section */}
                                 <div className="bg-white shadow rounded-lg p-6">
                                     <h3 className="text-lg font-medium text-gray-900 mb-4">Categories</h3>
-                                    
+
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
                                             <label htmlFor="bible_book_id" className="block text-sm font-medium text-gray-700 mb-2">
@@ -300,7 +302,7 @@ export default function AdminQuestionsEdit({ question, bibleBooks, topics }: Pag
                                 {/* Status Section */}
                                 <div className="bg-white shadow rounded-lg p-6">
                                     <h3 className="text-lg font-medium text-gray-900 mb-4">Status</h3>
-                                    
+
                                     <div className="space-y-3">
                                         <label className="flex items-center">
                                             <input
@@ -357,7 +359,7 @@ export default function AdminQuestionsEdit({ question, bibleBooks, topics }: Pag
                             <div className="lg:col-span-1">
                                 <div className="bg-white shadow rounded-lg p-6 sticky top-6">
                                     <h3 className="text-lg font-medium text-gray-900 mb-4">Preview</h3>
-                                    
+
                                     <div className="space-y-4">
                                         <div>
                                             <h4 className="font-medium text-gray-900 mb-2">Question</h4>

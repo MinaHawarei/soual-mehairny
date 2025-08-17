@@ -16,17 +16,18 @@ interface PageProps {
 }
 
 export default function AdminBibleBooksEdit({ bibleBook }: PageProps) {
-    const { data, setData, put, processing, errors } = useForm({
+    const { data, setData, post, processing, errors } = useForm({
         name_ar: bibleBook.name_ar,
         name_en: bibleBook.name_en,
         abbreviation_ar: bibleBook.abbreviation_ar || '',
         abbreviation_en: bibleBook.abbreviation_en || '',
         order: bibleBook.order,
+        _method: 'PUT',
     });
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        put(route('admin.bible-books.update', bibleBook.id));
+        post(route('admin.bible-books.update', bibleBook.id));
     };
 
     return (
@@ -61,7 +62,7 @@ export default function AdminBibleBooksEdit({ bibleBook }: PageProps) {
                             {/* Names Section */}
                             <div>
                                 <h3 className="text-lg font-medium text-gray-900 mb-4">Book Names</h3>
-                                
+
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <label htmlFor="name_ar" className="block text-sm font-medium text-gray-700 mb-2">
@@ -104,7 +105,7 @@ export default function AdminBibleBooksEdit({ bibleBook }: PageProps) {
                             {/* Abbreviations Section */}
                             <div>
                                 <h3 className="text-lg font-medium text-gray-900 mb-4">Abbreviations</h3>
-                                
+
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <label htmlFor="abbreviation_ar" className="block text-sm font-medium text-gray-700 mb-2">
@@ -153,7 +154,7 @@ export default function AdminBibleBooksEdit({ bibleBook }: PageProps) {
                             {/* Order Section */}
                             <div>
                                 <h3 className="text-lg font-medium text-gray-900 mb-4">Order</h3>
-                                
+
                                 <div>
                                     <label htmlFor="order" className="block text-sm font-medium text-gray-700 mb-2">
                                         Biblical Order *
@@ -165,7 +166,7 @@ export default function AdminBibleBooksEdit({ bibleBook }: PageProps) {
                                         max="66"
                                         className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                                         value={data.order}
-                                        onChange={(e) => setData('order', e.target.value)}
+                                        onChange={(e) => setData('order', Number(e.target.value))}
                                         placeholder="e.g., 1 for Genesis, 66 for Revelation"
                                         required
                                     />

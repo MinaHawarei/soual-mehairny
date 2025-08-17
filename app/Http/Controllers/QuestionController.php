@@ -42,18 +42,19 @@ class QuestionController extends Controller
         ]);
     }
 
-    public function show(Question $question): Response
+    public function show($locale, $questionId): Response
     {
+        $question = Question::with(['bibleBook', 'topic'])->findOrFail($questionId);
+
         if ($question->status !== 'approved') {
             abort(404);
         }
-
-        $question->load(['bibleBook', 'topic']);
 
         return Inertia::render('Questions/Show', [
             'question' => $question,
         ]);
     }
+
 
     public function create(): Response
     {
@@ -81,8 +82,8 @@ class QuestionController extends Controller
         Question::create($validated);
 
         return redirect()->route('questions.index')
-            ->with('success', app()->getLocale() === 'ar' 
-                ? 'تم إرسال سؤالك بنجاح. سنقوم بمراجعته والرد عليه قريباً.' 
+            ->with('success', app()->getLocale() === 'ar'
+                ? 'تم إرسال سؤالك بنجاح. سنقوم بمراجعته والرد عليه قريباً.'
                 : 'Your question has been submitted successfully. We will review and answer it soon.');
     }
 }

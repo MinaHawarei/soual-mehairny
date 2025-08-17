@@ -32,11 +32,13 @@ interface PageProps {
 }
 
 export default function AdminQuestionsShow({ question }: PageProps) {
-    const { delete: destroy, processing } = useForm();
+    const { post, processing } = useForm({
+        _method: 'DELETE',
+    });
 
     const handleDelete = () => {
         if (confirm('Are you sure you want to delete this question? This action cannot be undone.')) {
-            destroy(route('admin.questions.destroy', question.id));
+            post(route('admin.questions.destroy', question.id));
         }
     };
 
@@ -115,7 +117,7 @@ export default function AdminQuestionsShow({ question }: PageProps) {
                         {/* Question Section */}
                         <div className="bg-white shadow rounded-lg p-6">
                             <h3 className="text-lg font-medium text-gray-900 mb-4">Question</h3>
-                            
+
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <h4 className="text-sm font-medium text-gray-700 mb-2">Arabic</h4>
@@ -132,7 +134,7 @@ export default function AdminQuestionsShow({ question }: PageProps) {
                         {(question.answer_ar || question.answer_en) && (
                             <div className="bg-white shadow rounded-lg p-6">
                                 <h3 className="text-lg font-medium text-gray-900 mb-4">Answer</h3>
-                                
+
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
                                         <h4 className="text-sm font-medium text-gray-700 mb-2">Arabic</h4>
@@ -150,7 +152,7 @@ export default function AdminQuestionsShow({ question }: PageProps) {
                         {question.youtube_video_id && (
                             <div className="bg-white shadow rounded-lg p-6">
                                 <h3 className="text-lg font-medium text-gray-900 mb-4">YouTube Video</h3>
-                                
+
                                 <div className="space-y-4">
                                     <div className="aspect-w-16 aspect-h-9">
                                         <iframe
@@ -181,7 +183,7 @@ export default function AdminQuestionsShow({ question }: PageProps) {
                         {/* Categories Section */}
                         <div className="bg-white shadow rounded-lg p-6">
                             <h3 className="text-lg font-medium text-gray-900 mb-4">Categories</h3>
-                            
+
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <h4 className="text-sm font-medium text-gray-700 mb-2">Bible Book</h4>
@@ -212,7 +214,7 @@ export default function AdminQuestionsShow({ question }: PageProps) {
                         {(question.submitter_name || question.submitter_email) && (
                             <div className="bg-white shadow rounded-lg p-6">
                                 <h3 className="text-lg font-medium text-gray-900 mb-4">Submitter Information</h3>
-                                
+
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     {question.submitter_name && (
                                         <div>

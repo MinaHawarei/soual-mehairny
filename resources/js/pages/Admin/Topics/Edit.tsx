@@ -16,17 +16,19 @@ interface PageProps {
 }
 
 export default function AdminTopicsEdit({ topic }: PageProps) {
-    const { data, setData, put, processing, errors } = useForm({
+    const { data, setData, post, processing, errors } = useForm({
         name_ar: topic.name_ar,
         name_en: topic.name_en,
         slug: topic.slug,
         description_ar: topic.description_ar || '',
         description_en: topic.description_en || '',
+        _method: 'PUT',
+
     });
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        put(route('admin.topics.update', topic.id));
+        post(route('admin.topics.update', topic.id));
     };
 
     const generateSlug = (name: string) => {
@@ -40,7 +42,7 @@ export default function AdminTopicsEdit({ topic }: PageProps) {
 
     const handleNameChange = (field: 'name_ar' | 'name_en', value: string) => {
         setData(field, value);
-        
+
         // Auto-generate slug from English name if it's empty
         if (field === 'name_en' && !data.slug) {
             const slug = generateSlug(value);
@@ -80,7 +82,7 @@ export default function AdminTopicsEdit({ topic }: PageProps) {
                             {/* Names Section */}
                             <div>
                                 <h3 className="text-lg font-medium text-gray-900 mb-4">Topic Names</h3>
-                                
+
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <label htmlFor="name_ar" className="block text-sm font-medium text-gray-700 mb-2">
@@ -123,7 +125,7 @@ export default function AdminTopicsEdit({ topic }: PageProps) {
                             {/* Slug Section */}
                             <div>
                                 <h3 className="text-lg font-medium text-gray-900 mb-4">URL Slug</h3>
-                                
+
                                 <div>
                                     <label htmlFor="slug" className="block text-sm font-medium text-gray-700 mb-2">
                                         URL Slug *
@@ -149,7 +151,7 @@ export default function AdminTopicsEdit({ topic }: PageProps) {
                             {/* Descriptions Section */}
                             <div>
                                 <h3 className="text-lg font-medium text-gray-900 mb-4">Descriptions</h3>
-                                
+
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <label htmlFor="description_ar" className="block text-sm font-medium text-gray-700 mb-2">

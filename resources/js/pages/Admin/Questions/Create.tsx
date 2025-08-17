@@ -27,8 +27,8 @@ export default function AdminQuestionsCreate({ bibleBooks, topics }: PageProps) 
         youtube_video_id: '',
         submitter_name: '',
         submitter_email: '',
-        bible_book_id: '',
-        topic_id: '',
+        bible_book_id: null as number | null,
+        topic_id: null as number | null,
         chapter_verse: '',
         status: 'approved' as 'pending' | 'approved' | 'rejected',
     });
@@ -82,7 +82,7 @@ export default function AdminQuestionsCreate({ bibleBooks, topics }: PageProps) 
                                 {/* Question Section */}
                                 <div className="bg-white shadow rounded-lg p-6">
                                     <h3 className="text-lg font-medium text-gray-900 mb-4">Question Details</h3>
-                                    
+
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
                                             <label htmlFor="question_ar" className="block text-sm font-medium text-gray-700 mb-2">
@@ -125,7 +125,7 @@ export default function AdminQuestionsCreate({ bibleBooks, topics }: PageProps) 
                                 {/* Answer Section */}
                                 <div className="bg-white shadow rounded-lg p-6">
                                     <h3 className="text-lg font-medium text-gray-900 mb-4">Answer</h3>
-                                    
+
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
                                             <label htmlFor="answer_ar" className="block text-sm font-medium text-gray-700 mb-2">
@@ -188,7 +188,7 @@ export default function AdminQuestionsCreate({ bibleBooks, topics }: PageProps) 
                                 {/* Submitter Section */}
                                 <div className="bg-white shadow rounded-lg p-6">
                                     <h3 className="text-lg font-medium text-gray-900 mb-4">Submitter Information</h3>
-                                    
+
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
                                             <label htmlFor="submitter_name" className="block text-sm font-medium text-gray-700 mb-2">
@@ -229,7 +229,7 @@ export default function AdminQuestionsCreate({ bibleBooks, topics }: PageProps) 
                                 {/* Categories Section */}
                                 <div className="bg-white shadow rounded-lg p-6">
                                     <h3 className="text-lg font-medium text-gray-900 mb-4">Categories</h3>
-                                    
+
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
                                             <label htmlFor="bible_book_id" className="block text-sm font-medium text-gray-700 mb-2">
@@ -238,8 +238,8 @@ export default function AdminQuestionsCreate({ bibleBooks, topics }: PageProps) 
                                             <select
                                                 id="bible_book_id"
                                                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                                                value={data.bible_book_id}
-                                                onChange={(e) => setData('bible_book_id', e.target.value ? Number(e.target.value) : '')}
+                                                value={data.bible_book_id ?? ''}
+                                                onChange={(e) => setData('bible_book_id', e.target.value ? Number(e.target.value) : null)}
                                             >
                                                 <option value="">Select a Bible book</option>
                                                 {bibleBooks.map((book) => (
@@ -260,8 +260,8 @@ export default function AdminQuestionsCreate({ bibleBooks, topics }: PageProps) 
                                             <select
                                                 id="topic_id"
                                                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                                                value={data.topic_id}
-                                                onChange={(e) => setData('topic_id', e.target.value ? Number(e.target.value) : '')}
+                                                value={data.topic_id ?? ''}
+                                                onChange={(e) => setData('topic_id', e.target.value ? Number(e.target.value) : null)}
                                             >
                                                 <option value="">Select a topic</option>
                                                 {topics.map((topic) => (
@@ -297,7 +297,7 @@ export default function AdminQuestionsCreate({ bibleBooks, topics }: PageProps) 
                                 {/* Status Section */}
                                 <div className="bg-white shadow rounded-lg p-6">
                                     <h3 className="text-lg font-medium text-gray-900 mb-4">Status</h3>
-                                    
+
                                     <div className="space-y-3">
                                         <label className="flex items-center">
                                             <input
@@ -354,7 +354,7 @@ export default function AdminQuestionsCreate({ bibleBooks, topics }: PageProps) 
                             <div className="lg:col-span-1">
                                 <div className="bg-white shadow rounded-lg p-6 sticky top-6">
                                     <h3 className="text-lg font-medium text-gray-900 mb-4">Preview</h3>
-                                    
+
                                     <div className="space-y-4">
                                         <div>
                                             <h4 className="font-medium text-gray-900 mb-2">Question</h4>

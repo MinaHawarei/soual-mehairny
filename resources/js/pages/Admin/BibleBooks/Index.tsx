@@ -26,7 +26,9 @@ export default function AdminBibleBooksIndex({ bibleBooks, filters }: PageProps)
     const [selectedOrder, setSelectedOrder] = useState(filters.order || 'asc');
     const [showFilters, setShowFilters] = useState(false);
 
-    const { delete: destroy, processing } = useForm();
+    const { data, setData, post, processing } = useForm({
+        _method: 'DELETE',
+    });
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
@@ -47,7 +49,8 @@ export default function AdminBibleBooksIndex({ bibleBooks, filters }: PageProps)
 
     const handleDelete = (id: number) => {
         if (confirm('Are you sure you want to delete this Bible book? This action cannot be undone.')) {
-            destroy(route('admin.bible-books.destroy', id));
+            setData('_method', 'DELETE');
+            post(route('admin.bible-books.destroy', id));
         }
     };
 
@@ -250,8 +253,8 @@ export default function AdminBibleBooksIndex({ bibleBooks, filters }: PageProps)
                             <BookOpen className="mx-auto h-12 w-12 text-gray-400" />
                             <h3 className="mt-2 text-sm font-medium text-gray-900">No Bible books found</h3>
                             <p className="mt-1 text-sm text-gray-500">
-                                {searchQuery || selectedOrder !== 'asc' 
-                                    ? 'Try adjusting your search or filters.' 
+                                {searchQuery || selectedOrder !== 'asc'
+                                    ? 'Try adjusting your search or filters.'
                                     : 'Get started by creating your first Bible book category.'
                                 }
                             </p>

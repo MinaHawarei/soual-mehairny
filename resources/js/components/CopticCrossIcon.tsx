@@ -15,3 +15,4 @@ export default function CopticCrossIcon({ className = '', size = 32 }: CopticCro
         />
     );
 }
+

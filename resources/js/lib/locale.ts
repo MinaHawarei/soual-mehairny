@@ -56,3 +56,4 @@ export function buildLocalizedPathWithParams(path: string, params: Record<string
     
     return queryString ? `${localizedPath}?${queryString}` : localizedPath;
 }
+
