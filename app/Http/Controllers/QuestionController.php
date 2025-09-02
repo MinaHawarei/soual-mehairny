@@ -25,7 +25,7 @@ class QuestionController extends Controller
             ->when($bibleBookId, fn($query) => $query->byBibleBook($bibleBookId))
             ->when($topicId, fn($query) => $query->byTopic($topicId))
             ->latest()
-            ->paginate(12)
+            ->paginate(5)
             ->withQueryString();
 
         $bibleBooks = BibleBook::orderBy('order')->get();

@@ -4,7 +4,7 @@ import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid , User } from 'lucide-react';
+import { BookOpen, Tag, Home , Users , HelpCircle , Inbox } from 'lucide-react';
 import AppLogo from './app-logo';
 import { isArabic } from '@/lib/locale';
 
@@ -12,17 +12,17 @@ const mainNavItems: NavItem[] = [
     {
         title: 'Dashboard',
         href: '/admin/dashboard',
-        icon: LayoutGrid,
+        icon: Home,
     },
     {
         title: 'Reserved Questions',
         href: '/admin/ask',
-        icon: BookOpen,
+        icon: Inbox,
     },
     {
         title: 'Questions',
         href: '/admin/questions',
-        icon: BookOpen,
+        icon: HelpCircle,
     },
     {
         title: 'Bible Books',
@@ -32,12 +32,12 @@ const mainNavItems: NavItem[] = [
     {
         title: 'Topics',
         href: '/admin/topics',
-        icon: Folder,
+        icon: Tag,
     },
     {
         title: 'Users',
         href: '/admin/users',
-        icon: User,
+        icon: Users,
     },
 ];
 

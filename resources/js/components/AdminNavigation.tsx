@@ -6,7 +6,9 @@ import {
     Tag,
     Users,
     Settings,
-    ChevronDown
+    ChevronDown,
+    Inbox,
+    HelpCircle
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -28,13 +30,13 @@ export default function AdminNavigation({ className = '' }: AdminNavigationProps
         {
             name: 'Reserved Questions',
             href: route('admin.ask.index'),
-            icon: MessageSquare,
+            icon: Inbox,
             current: url.startsWith('/ask'),
         },
         {
             name: 'Questions',
             href: route('admin.questions.index'),
-            icon: MessageSquare,
+            icon: HelpCircle,
             current: url.startsWith('/admin/questions'),
         },
         {

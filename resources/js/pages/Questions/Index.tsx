@@ -298,7 +298,7 @@ export default function QuestionsIndex({ questions, bibleBooks, topics, filters 
                                     } ${!link.url ? 'cursor-not-allowed opacity-50' : ''}`}
                                     {...(!link.url && { onClick: (e) => e.preventDefault() })}
                                 >
-                                    {link.label}
+                                        <span dangerouslySetInnerHTML={{ __html: link.label }} />
                                 </Link>
                             ))}
                         </nav>

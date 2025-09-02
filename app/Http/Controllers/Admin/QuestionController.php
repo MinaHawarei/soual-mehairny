@@ -83,6 +83,7 @@ class QuestionController extends Controller
             'submitter_name_ar' => 'required|string|max:255',
             'submitter_name_en' => 'required|string|max:255',
             'submitter_email' => 'nullable|email|max:255',
+            'youtube_video_id' => 'nullable|string',
             'bible_book_id' => 'nullable|exists:bible_books,id',
             'topic_id' => 'nullable|exists:topics,id',
             'chapter_verse' => 'nullable|string|max:100',
