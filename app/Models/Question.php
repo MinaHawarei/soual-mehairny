@@ -24,6 +24,7 @@ class Question extends Model
         'bible_book_id',
         'topic_id',
         'chapter_verse',
+        'created_at',
     ];
 
     protected $casts = [

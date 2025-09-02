@@ -32,6 +32,7 @@ export default function AdminQuestionsCreate({ bibleBooks, topics }: PageProps) 
         topic_id: null as number | null,
         chapter_verse: '',
         status: 'approved' as 'approved' | 'disable',
+        created_at: ''
     });
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -188,7 +189,7 @@ export default function AdminQuestionsCreate({ bibleBooks, topics }: PageProps) 
 
                                 {/* Submitter Section */}
                                 <div className="bg-white shadow rounded-lg p-6">
-                                    <h3 className="text-lg font-medium text-gray-900 mb-4">Submitter Information</h3>
+                                    <h3 className="text-lg font-medium text-gray-900 mb-4">Auther Information</h3>
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
@@ -291,24 +292,40 @@ export default function AdminQuestionsCreate({ bibleBooks, topics }: PageProps) 
                                                 <p className="mt-1 text-sm text-red-600">{errors.topic_id}</p>
                                             )}
                                         </div>
+
+                                        <div>
+                                            <label htmlFor="chapter_verse" className="block text-sm font-medium text-gray-700 mb-2">
+                                                Chapter & Verse Reference
+                                            </label>
+                                            <input
+                                                type="text"
+                                                id="chapter_verse"
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                                                value={data.chapter_verse}
+                                                onChange={(e) => setData('chapter_verse', e.target.value)}
+                                                placeholder="e.g., John 3:16, Genesis 1:1-3"
+                                            />
+                                            {errors.chapter_verse && (
+                                                <p className="mt-1 text-sm text-red-600">{errors.chapter_verse}</p>
+                                            )}
+                                        </div>
+
+                                        <div>
+                                            <label htmlFor="created_at" className="block text-sm font-medium text-gray-700 mb-2">
+                                                Creation Date
+                                            </label>
+                                            <input
+                                                type="datetime-local"
+                                                id="created_at"
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                                                value={data.created_at}
+                                                onChange={(e) => setData('created_at', e.target.value)}
+                                            />
+                                        </div>
                                     </div>
 
-                                    <div className="mt-4">
-                                        <label htmlFor="chapter_verse" className="block text-sm font-medium text-gray-700 mb-2">
-                                            Chapter & Verse Reference
-                                        </label>
-                                        <input
-                                            type="text"
-                                            id="chapter_verse"
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                                            value={data.chapter_verse}
-                                            onChange={(e) => setData('chapter_verse', e.target.value)}
-                                            placeholder="e.g., John 3:16, Genesis 1:1-3"
-                                        />
-                                        {errors.chapter_verse && (
-                                            <p className="mt-1 text-sm text-red-600">{errors.chapter_verse}</p>
-                                        )}
-                                    </div>
+
+
                                 </div>
 
                                 {/* Status Section */}

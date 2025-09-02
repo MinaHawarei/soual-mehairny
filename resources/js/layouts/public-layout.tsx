@@ -137,6 +137,9 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
                                 ? '© 2025جميع الحقوق محفوظة.'
                                 : '© 2025 All rights reserved.'}
                         </p>
+                        <p className="text-gray-600 text-sm">
+                            Developed by: <a href="https://wa.me/201212505266" target="_blank" className="hover:underline">Mina Hawarei</a>
+                        </p>
                     </div>
                 </div>
             </footer>

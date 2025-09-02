@@ -86,6 +86,8 @@ class QuestionController extends Controller
             'bible_book_id' => 'nullable|exists:bible_books,id',
             'topic_id' => 'nullable|exists:topics,id',
             'chapter_verse' => 'nullable|string|max:100',
+            'created_at' => 'nullable|date',
+
         ]);
 
         $question = Question::create($validated);
@@ -132,6 +134,8 @@ class QuestionController extends Controller
             'bible_book_id' => 'nullable|exists:bible_books,id',
             'topic_id' => 'nullable|exists:topics,id',
             'chapter_verse' => 'nullable|string',
+            'created_at' => 'nullable|date',
+
         ]);
 
         $question->update($validated);
