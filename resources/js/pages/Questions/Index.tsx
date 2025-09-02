@@ -13,7 +13,8 @@ interface Question {
     answer_ar: string | null;
     answer_en: string | null;
     youtube_video_id: string | null;
-    submitter_name: string | null;
+    submitter_name_ar: string | null;
+    submitter_name_en: string | null;
     created_at: string;
     bible_book?: {
         id: number;
@@ -168,14 +169,14 @@ export default function QuestionsIndex({ questions, bibleBooks, topics, filters 
                             <div className="grid md:grid-cols-2 gap-4 pt-4 border-t">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        {isArabic ? 'كتاب الكتاب المقدس' : 'Bible Book'}
+                                        {isArabic ? 'اسفار الكتاب المقدس' : 'Bible Books'}
                                     </label>
                                     <select
                                         value={selectedBibleBook}
                                         onChange={(e) => setSelectedBibleBook(e.target.value)}
                                         className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                     >
-                                        <option value="">{isArabic ? 'جميع الكتب' : 'All Books'}</option>
+                                        <option value="">{isArabic ? 'كل أسفار الكتاب المقدس' : 'All Bible Books'}</option>
                                         {bibleBooks.map((book) => (
                                             <option key={book.id} value={book.id}>
                                                 {getLocalizedName(book)}
@@ -271,9 +272,10 @@ export default function QuestionsIndex({ questions, bibleBooks, topics, filters 
                                 >
                                     {isArabic ? 'اقرأ المزيد' : 'Read More'}
                                 </Link>
-                                {question.submitter_name && (
+                                {question.submitter_name_ar && (
                                     <span className="text-sm text-gray-500 bg-gray-100 px-4 py-2 rounded-full">
-                                        {isArabic ? 'بواسطة' : 'By'} {question.submitter_name}
+                                        {isArabic ? `بواسطة ${question.submitter_name_ar}` : `By ${question.submitter_name_en}`}
+
                                     </span>
                                 )}
                             </div>

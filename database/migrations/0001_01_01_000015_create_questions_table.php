@@ -15,14 +15,15 @@ return new class extends Migration
             $table->text('answer_ar')->nullable(); // Answer in Arabic
             $table->text('answer_en')->nullable(); // Answer in English
             $table->string('youtube_video_id')->nullable(); // YouTube video ID
-            $table->string('submitter_name')->nullable(); // Name of person who submitted
+            $table->string('submitter_name_ar')->nullable(); // Name of person who submitted
+            $table->string('submitter_name_en')->nullable(); // Name of person who submitted
             $table->string('submitter_email')->nullable(); // Email of person who submitted
-            $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
+            $table->enum('status', ['approved', 'disable'])->default('approved');
             $table->foreignId('bible_book_id')->nullable()->constrained()->onDelete('set null');
             $table->foreignId('topic_id')->nullable()->constrained()->onDelete('set null');
             $table->string('chapter_verse')->nullable(); // Specific Bible reference
             $table->timestamps();
-            
+
             // Indexes for better performance
             $table->index(['status', 'created_at']);
             $table->index(['bible_book_id']);

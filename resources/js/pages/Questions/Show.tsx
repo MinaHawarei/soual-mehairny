@@ -11,7 +11,8 @@ interface Question {
     answer_ar: string | null;
     answer_en: string | null;
     youtube_video_id: string | null;
-    submitter_name: string | null;
+    submitter_name_ar: string | null;
+    submitter_name_en: string | null;
     submitter_email: string | null;
     chapter_verse: string | null;
     created_at: string;
@@ -116,12 +117,12 @@ export default function QuestionShow({ question }: PageProps) {
 
                     </div>
                       {/* Submitter Information */}
-                        {question.submitter_name && (
+                        {question.submitter_name_ar && (
                             <div className="text-center">
                                 <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-amber-100 to-blue-100 px-6 py-3 rounded-full border border-amber-200/50">
                                     <User className="h-4 w-4 text-amber-600" />
                                     <span className="text-gray-700 font-medium">
-                                        {isArabicLocale ? 'بواسطة' : 'By'} {question.submitter_name}
+                                        {isArabicLocale ? `بواسطة ${question.submitter_name_ar}` : `By ${question.submitter_name_en}`}
                                     </span>
                                 </div>
                             </div>

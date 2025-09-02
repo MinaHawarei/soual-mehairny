@@ -58,6 +58,35 @@ class QuestionController extends Controller
         ]);
     }
 
+     public function create(): Response
+    {
+        $bibleBooks = BibleBook::orderBy('order')->get();
+        $topics = Topic::orderBy('name_' . app()->getLocale())->get();
+
+        return Inertia::render('Admin/Questions/Create', [
+            'bibleBooks' => $bibleBooks,
+            'topics' => $topics,
+        ]);
+    }
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'question_ar' => 'required|string|max:2000',
+            'question_en' => 'required|string|max:2000',
+            'submitter_name' => 'nullable|string|max:255',
+            'submitter_email' => 'nullable|email|max:255',
+            'bible_book_id' => 'nullable|exists:bible_books,id',
+            'topic_id' => 'nullable|exists:topics,id',
+            'chapter_verse' => 'nullable|string|max:100',
+        ]);
+
+        Question::create($validated);
+
+        return redirect()->route('questions.index');
+    }
+
+
     public function edit(Question $question): Response
     {
         $question->load(['bibleBook', 'topic']);
@@ -74,22 +103,22 @@ class QuestionController extends Controller
     public function update(Request $request, Question $question)
     {
         $validated = $request->validate([
-            'question_ar' => 'required|string|max:2000',
-            'question_en' => 'required|string|max:2000',
-            'answer_ar' => 'nullable|string|max:5000',
-            'answer_en' => 'nullable|string|max:5000',
-            'youtube_video_id' => 'nullable|string|max:20',
-            'status' => 'required|in:pending,approved,rejected',
+            'question_ar' => 'required|string',
+            'question_en' => 'required|string',
+            'answer_ar' => 'nullable|string',
+            'answer_en' => 'nullable|string',
+            'youtube_video_id' => 'nullable|string',
+            'status' => 'required|in:approved,disable',
             'bible_book_id' => 'nullable|exists:bible_books,id',
             'topic_id' => 'nullable|exists:topics,id',
-            'chapter_verse' => 'nullable|string|max:100',
+            'chapter_verse' => 'nullable|string',
         ]);
 
         $question->update($validated);
 
         return redirect()->route('admin.questions.index')
-            ->with('success', app()->getLocale() === 'ar' 
-                ? 'تم تحديث السؤال بنجاح' 
+            ->with('success', app()->getLocale() === 'ar'
+                ? 'تم تحديث السؤال بنجاح'
                 : 'Question updated successfully');
     }
 
@@ -98,8 +127,8 @@ class QuestionController extends Controller
         $question->delete();
 
         return redirect()->route('admin.questions.index')
-            ->with('success', app()->getLocale() === 'ar' 
-                ? 'تم حذف السؤال بنجاح' 
+            ->with('success', app()->getLocale() === 'ar'
+                ? 'تم حذف السؤال بنجاح'
                 : 'Question deleted successfully');
     }
 
@@ -108,8 +137,8 @@ class QuestionController extends Controller
         $question->update(['status' => 'approved']);
 
         return redirect()->route('admin.questions.index')
-            ->with('success', app()->getLocale() === 'ar' 
-                ? 'تم الموافقة على السؤال' 
+            ->with('success', app()->getLocale() === 'ar'
+                ? 'تم الموافقة على السؤال'
                 : 'Question approved successfully');
     }
 
@@ -118,8 +147,8 @@ class QuestionController extends Controller
         $question->update(['status' => 'rejected']);
 
         return redirect()->route('admin.questions.index')
-            ->with('success', app()->getLocale() === 'ar' 
-                ? 'تم رفض السؤال' 
+            ->with('success', app()->getLocale() === 'ar'
+                ? 'تم رفض السؤال'
                 : 'Question rejected successfully');
     }
 }

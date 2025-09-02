@@ -1,35 +1,21 @@
-import { Link, useForm } from '@inertiajs/react';
+import { router  , Link, useForm } from '@inertiajs/react';
 import { Search, Filter, Edit, Trash2, CheckCircle, XCircle, Eye, Plus } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
 import { useState } from 'react';
 
 interface Question {
     id: number;
-    question_ar: string;
-    question_en: string;
-    answer_ar: string | null;
-    answer_en: string | null;
+    question: string;
     youtube_video_id: string | null;
-    submitter_name_en: string | null;
-    submitter_email: string | null;
+    email: string | null;
     status: 'Enabled' | 'Disabled';
     created_at: string;
-    bible_book?: {
-        id: number;
-        name_ar: string;
-        name_en: string;
-    };
+
     topic?: {
         id: number;
         name_ar: string;
         name_en: string;
     };
-}
-
-interface BibleBook {
-    id: number;
-    name_ar: string;
-    name_en: string;
 }
 
 interface Topic {
@@ -41,7 +27,6 @@ interface Topic {
 interface Filters {
     search?: string;
     status?: string;
-    bible_book_id?: string;
     topic_id?: string;
 }
 
@@ -54,17 +39,17 @@ interface PageProps {
         total: number;
         links: any[];
     };
-    bibleBooks: BibleBook[];
     topics: Topic[];
     filters: Filters;
 }
 
-export default function AdminQuestionsIndex({ questions, bibleBooks, topics, filters }: PageProps) {
+export default function AdminAskIndex({ questions, topics, filters }: PageProps) {
     const [searchQuery, setSearchQuery] = useState(filters.search || '');
     const [selectedStatus, setSelectedStatus] = useState(filters.status || 'all');
-    const [selectedBibleBook, setSelectedBibleBook] = useState(filters.bible_book_id || '');
     const [selectedTopic, setSelectedTopic] = useState(filters.topic_id || '');
     const [showFilters, setShowFilters] = useState(false);
+    // حالة جديدة لتخزين معرفات الأسئلة المحددة
+    const [selectedQuestions, setSelectedQuestions] = useState<number[]>([]);
 
     const { delete: destroy, processing } = useForm();
 
@@ -77,23 +62,57 @@ export default function AdminQuestionsIndex({ questions, bibleBooks, topics, fil
         const params = new URLSearchParams();
         if (searchQuery) params.append('search', searchQuery);
         if (selectedStatus !== 'all') params.append('status', selectedStatus);
-        if (selectedBibleBook) params.append('bible_book_id', selectedBibleBook);
         if (selectedTopic) params.append('topic_id', selectedTopic);
 
-        window.location.href = `/admin/questions?${params.toString()}`;
+        window.location.href = `/admin/ask?${params.toString()}`;
     };
 
     const clearFilters = () => {
         setSearchQuery('');
         setSelectedStatus('all');
-        setSelectedBibleBook('');
         setSelectedTopic('');
-        window.location.href = '/admin/questions';
+        window.location.href = '/admin/ask';
     };
 
     const handleDelete = (questionId: number) => {
         if (confirm('Are you sure you want to delete this question? This action cannot be undone.')) {
-            destroy(`/admin/questions/${questionId}`);
+            destroy(`/admin/ask/${questionId}`);
+        }
+    };
+
+    // دالة للتعامل مع تحديد/إلغاء تحديد كل الأسئلة
+    const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.checked) {
+            const allIds = questions.data.map(q => q.id);
+            setSelectedQuestions(allIds);
+        } else {
+            setSelectedQuestions([]);
+        }
+    };
+
+    // دالة للتعامل مع تحديد/إلغاء تحديد سؤال فردي
+    const handleSelectQuestion = (questionId: number) => {
+        setSelectedQuestions(prevSelected =>
+            prevSelected.includes(questionId)
+                ? prevSelected.filter(id => id !== questionId)
+                : [...prevSelected, questionId]
+        );
+    };
+    const { post } = useForm();
+
+    // دالة جديدة لحذف الأسئلة المحددة
+    const handleBulkDelete = () => {
+        if (selectedQuestions.length === 0) {
+            return;
+        }
+
+        if (confirm(`Are you sure you want to delete ${selectedQuestions.length} questions? This action cannot be undone.`)) {
+            // استخدام مسار جديد لحذف المجموعات (يجب إعداده في مسارات Laravel)
+            router.post(route('admin.asks.bulk-delete'), {
+                ids: selectedQuestions,
+            });
+
+
         }
     };
 
@@ -109,31 +128,42 @@ export default function AdminQuestionsIndex({ questions, bibleBooks, topics, fil
     };
 
     const getLocalizedName = (item: { name_ar: string; name_en: string }) => {
-        // For admin, we'll use English as default
         return item.name_en;
     };
 
     const getLocalizedQuestion = (question: Question) => {
-        // For admin, we'll use English as default
-        return question.question_en;
+        return question.question;
     };
 
     return (
         <AppLayout>
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="max-w-7xl px-4 sm:px-6 lg:px-8">
                 {/* Header */}
                 <div className="mb-8 flex justify-between items-center">
                     <div>
                         <h1 className="text-3xl font-bold text-gray-900">Manage Questions</h1>
                         <p className="text-gray-600">Review, approve, and manage submitted questions</p>
                     </div>
-                    <Link
-                        href="/admin/questions/create"
-                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center"
-                    >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add Question
-                    </Link>
+                    <div className="flex space-x-4">
+                        {/* زر الحذف المتعدد، يظهر فقط عند وجود عناصر محددة */}
+                        {selectedQuestions.length > 0 && (
+                            <button
+                                onClick={handleBulkDelete}
+                                disabled={processing}
+                                className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors flex items-center disabled:opacity-50"
+                            >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete Selected ({selectedQuestions.length})
+                            </button>
+                        )}
+                        <Link
+                            href="/admin/ask/create"
+                            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center"
+                        >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add Question
+                        </Link>
+                    </div>
                 </div>
 
                 {/* Search and Filters */}
@@ -171,7 +201,7 @@ export default function AdminQuestionsIndex({ questions, bibleBooks, topics, fil
                                 <span>Additional Filters</span>
                             </button>
 
-                            {(filters.search || filters.status || filters.bible_book_id || filters.topic_id) && (
+                            {(filters.search || filters.status || filters.topic_id) && (
                                 <button
                                     type="button"
                                     onClick={clearFilters}
@@ -185,33 +215,6 @@ export default function AdminQuestionsIndex({ questions, bibleBooks, topics, fil
                         {/* Filters */}
                         {showFilters && (
                             <div className="grid md:grid-cols-3 gap-4 pt-4 border-t">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
-                                    <select
-                                        value={selectedStatus}
-                                        onChange={(e) => setSelectedStatus(e.target.value)}
-                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                    >
-                                        <option value="all">All Statuses</option>
-                                        <option value="approved">Enable</option>
-                                        <option value="disabled">Disabled</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">Bible Book</label>
-                                    <select
-                                        value={selectedBibleBook}
-                                        onChange={(e) => setSelectedBibleBook(e.target.value)}
-                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                    >
-                                        <option value="">All Books</option>
-                                        {bibleBooks.map((book) => (
-                                            <option key={book.id} value={book.id}>
-                                                {getLocalizedName(book)}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">Topic</label>
                                     <select
@@ -245,17 +248,20 @@ export default function AdminQuestionsIndex({ questions, bibleBooks, topics, fil
                         <table className="min-w-full divide-y divide-gray-200">
                             <thead className="bg-gray-50">
                                 <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    {/* خلية جديدة لخانة الاختيار الرئيسية */}
+                                    <th className="px-6 py-3 text-left">
+                                        <input
+                                            type="checkbox"
+                                            onChange={handleSelectAll}
+                                            checked={selectedQuestions.length === questions.data.length && questions.data.length > 0}
+                                            className="h-4 w-4 text-blue-600 border-gray-300 rounded"
+                                        />
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-full">
                                         Question
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Status
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         Categories
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Submitter
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         Date
@@ -268,26 +274,27 @@ export default function AdminQuestionsIndex({ questions, bibleBooks, topics, fil
                             <tbody className="bg-white divide-y divide-gray-200">
                                 {questions.data.map((question) => (
                                     <tr key={question.id} className="hover:bg-gray-50">
+                                        {/* خلية جديدة لكل خانة اختيار فردية */}
                                         <td className="px-6 py-4">
-                                            <div className="max-w-xs">
-                                                <p className="text-sm font-medium text-gray-900 truncate">
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedQuestions.includes(question.id)}
+                                                onChange={() => handleSelectQuestion(question.id)}
+                                                className="h-4 w-4 text-blue-600 border-gray-300 rounded"
+                                            />
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="w-full max-w-lg">
+                                                <p
+                                                    className="text-sm font-medium text-gray-900 truncate"
+                                                    title={getLocalizedQuestion(question)}
+                                                >
                                                     {getLocalizedQuestion(question)}
-                                                </p>
-                                                <p className="text-xs text-gray-500 mt-1">
-                                                    {question.question_ar.substring(0, 50)}...
                                                 </p>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            {getStatusBadge(question.status)}
-                                        </td>
-                                        <td className="px-6 py-4">
                                             <div className="text-sm text-gray-900 space-y-1">
-                                                {question.bible_book && (
-                                                    <div className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                                                        {getLocalizedName(question.bible_book)}
-                                                    </div>
-                                                )}
                                                 {question.topic && (
                                                     <div className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
                                                         {getLocalizedName(question.topic)}
@@ -297,31 +304,15 @@ export default function AdminQuestionsIndex({ questions, bibleBooks, topics, fil
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="text-sm text-gray-900">
-                                                {question.submitter_name_en || 'Anonymous'}
-                                            </div>
-                                            {question.submitter_email && (
-                                                <div className="text-xs text-gray-500">
-                                                    {question.submitter_email}
-                                                </div>
-                                            )}
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="text-sm text-gray-900">
                                                 {new Date(question.created_at).toLocaleDateString()}
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 text-right text-sm font-medium space-x-2">
                                             <Link
-                                                href={`/admin/questions/${question.id}`}
+                                                href={`/admin/ask/${question.id}`}
                                                 className="text-blue-600 hover:text-blue-900"
                                             >
                                                 <Eye className="h-4 w-4" />
-                                            </Link>
-                                            <Link
-                                                href={`/admin/questions/${question.id}/edit`}
-                                                className="text-indigo-600 hover:text-indigo-900"
-                                            >
-                                                <Edit className="h-4 w-4" />
                                             </Link>
                                             <button
                                                 onClick={() => handleDelete(question.id)}
@@ -371,7 +362,7 @@ export default function AdminQuestionsIndex({ questions, bibleBooks, topics, fil
                             Try adjusting your search criteria or filters
                         </p>
                         <Link
-                            href="/admin/questions/create"
+                            href="/admin/ask/create"
                             className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
                         >
                             Add First Question

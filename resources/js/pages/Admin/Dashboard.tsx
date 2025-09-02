@@ -16,7 +16,7 @@ interface PageProps {
 
 export default function AdminDashboard({ stats }: PageProps) {
     const isArabicLocale = isArabic();
-    
+
     return (
         <AppLayout>
             <div className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${isArabicLocale ? 'rtl' : 'ltr'}`}>
@@ -26,7 +26,7 @@ export default function AdminDashboard({ stats }: PageProps) {
                         {isArabicLocale ? 'لوحة تحكم المدير' : 'Admin Dashboard'}
                     </h1>
                     <p className={`text-gray-600 ${isArabicLocale ? 'text-right' : 'text-left'}`}>
-                        {isArabicLocale 
+                        {isArabicLocale
                             ? 'إدارة الأسئلة والمحتوى لمنصة المسيحية الأرثوذكسية'
                             : 'Manage questions and content for the Christian Orthodox platform'
                         }
@@ -74,7 +74,7 @@ export default function AdminDashboard({ stats }: PageProps) {
                             </div>
                             <div className={isArabicLocale ? 'mr-4' : 'ml-4'}>
                                 <p className={`text-sm font-medium text-gray-600 ${isArabicLocale ? 'text-right' : 'text-left'}`}>
-                                    {isArabicLocale ? 'تمت الموافقة' : 'Approved'}
+                                    {isArabicLocale ? 'معروض' : 'Enabled'}
                                 </p>
                                 <p className={`text-2xl font-bold text-gray-900 ${isArabicLocale ? 'text-right' : 'text-left'}`}>
                                     {stats.approved_questions}
@@ -90,7 +90,7 @@ export default function AdminDashboard({ stats }: PageProps) {
                             </div>
                             <div className={isArabicLocale ? 'mr-4' : 'ml-4'}>
                                 <p className={`text-sm font-medium text-gray-600 ${isArabicLocale ? 'text-right' : 'text-left'}`}>
-                                    {isArabicLocale ? 'مرفوض' : 'Rejected'}
+                                    {isArabicLocale ? 'غير معروض' : 'Disabled'}
                                 </p>
                                 <p className={`text-2xl font-bold text-gray-900 ${isArabicLocale ? 'text-right' : 'text-left'}`}>
                                     {stats.rejected_questions}
@@ -113,7 +113,7 @@ export default function AdminDashboard({ stats }: PageProps) {
                             </h3>
                         </div>
                         <p className={`text-gray-600 ${isArabicLocale ? 'text-right' : 'text-left'}`}>
-                            {isArabicLocale 
+                            {isArabicLocale
                                 ? 'مراجعة والموافقة ورفض وتحرير الأسئلة المقدمة'
                                 : 'Review, approve, reject, and edit submitted questions'
                             }
@@ -131,7 +131,7 @@ export default function AdminDashboard({ stats }: PageProps) {
                             </h3>
                         </div>
                         <p className={`text-gray-600 ${isArabicLocale ? 'text-right' : 'text-left'}`}>
-                            {isArabicLocale 
+                            {isArabicLocale
                                 ? 'إنشاء أسئلة جديدة مع إجابات ومحتوى فيديو'
                                 : 'Create new questions with answers and video content'
                             }

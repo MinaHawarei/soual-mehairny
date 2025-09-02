@@ -25,7 +25,7 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
     const navigation = [
         { name: currentLocale === 'ar' ? 'الرئيسية' : 'Home', href: buildLocalizedPath('') },
         { name: currentLocale === 'ar' ? 'الأسئلة' : 'Questions', href: buildLocalizedPath('questions') },
-        { name: currentLocale === 'ar' ? 'إرسال سؤال' : 'Submit Question', href: buildLocalizedPath('questions/create') },
+        { name: currentLocale === 'ar' ? 'إرسال سؤال' : 'Submit Question', href: buildLocalizedPath('ask/create') },
     ];
 
     return (

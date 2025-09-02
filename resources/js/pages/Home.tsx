@@ -66,7 +66,7 @@ export default function Home() {
                                 </span>
                             </Link>
                             <Link
-                                href={buildLocalizedPath('questions/create')}
+                                href={buildLocalizedPath('ask/create')}
                                 className="group border-2 border-white text-white px-10 py-4 rounded-2xl font-bold text-lg hover:bg-white hover:text-amber-700 transform hover:-translate-y-1 transition-all duration-300 shadow-lg hover:shadow-2xl"
                             >
                                 <span className="flex items-center justify-center space-x-3">
@@ -241,7 +241,7 @@ export default function Home() {
                             </span>
                         </Link>
                         <Link
-                            href={buildLocalizedPath('questions/create')}
+                            href={buildLocalizedPath('ask/create')}
                             className="group border-2 border-white text-white px-10 py-4 rounded-2xl font-bold text-lg hover:bg-white hover:text-amber-700 transform hover:-translate-y-1 transition-all duration-300 shadow-lg hover:shadow-2xl"
                         >
                             <span className="flex items-center justify-center space-x-3">

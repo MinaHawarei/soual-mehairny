@@ -4,6 +4,10 @@ import PublicLayout from '@/layouts/public-layout';
 import { useState } from 'react';
 import { isArabic, buildLocalizedPath } from '@/lib/locale';
 import CopticCrossIcon from '@/components/CopticCrossIcon';
+import Toast from "@/components/Toast";
+import { usePage } from "@inertiajs/react";
+
+
 
 interface BibleBook {
     id: number;
@@ -21,16 +25,23 @@ interface PageProps {
     bibleBooks: BibleBook[];
     topics: Topic[];
 }
+type InertiaProps = {
+  flash?: {
+    success?: string;
+    error?: string;
+  };
+};
 
 export default function QuestionCreate({ bibleBooks, topics }: PageProps) {
     const [showEnglish, setShowEnglish] = useState(false);
     const isArabicLocale = isArabic();
+    const { flash } = usePage().props as InertiaProps;
 
     const { data, setData, post, processing, errors } = useForm({
-        question_ar: '',
-        question_en: '',
+        question: '',
         submitter_name: '',
         submitter_email: '',
+        email: '',
         bible_book_id: '',
         topic_id: '',
         chapter_verse: '',
@@ -38,7 +49,7 @@ export default function QuestionCreate({ bibleBooks, topics }: PageProps) {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        post(buildLocalizedPath('questions'));
+        post(buildLocalizedPath('ask'));
     };
 
     const getLocalizedName = (item: { name_ar: string; name_en: string }) => {
@@ -47,6 +58,9 @@ export default function QuestionCreate({ bibleBooks, topics }: PageProps) {
 
     return (
         <PublicLayout>
+             {/* Toast Messages */}
+
+
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
                 {/* Header with Coptic Cross */}
                 <div className="mb-12 text-center">
@@ -70,6 +84,18 @@ export default function QuestionCreate({ bibleBooks, topics }: PageProps) {
                         }
                     </p>
                 </div>
+                 <div
+                    className={`mb-4 p-4 rounded-lg shadow-md transition-all ${
+                        flash?.success
+                        ? "bg-green-100 text-green-800"
+                        : flash?.error
+                        ? "bg-red-100 text-red-800"
+                        : "hidden"
+                    }`}
+                    >
+                    {flash?.success && <span>{flash.success}</span>}
+                    {flash?.error && <span>{flash.error}</span>}
+                </div>
 
                 {/* Back Navigation */}
                 <div className="mb-8">
@@ -85,130 +111,32 @@ export default function QuestionCreate({ bibleBooks, topics }: PageProps) {
                 {/* Enhanced Form */}
                 <div className="bg-gradient-to-br from-white to-amber-50/50 rounded-2xl shadow-xl border border-amber-200/50 p-8 backdrop-blur-sm">
                     <form onSubmit={handleSubmit} className="space-y-8">
-                        {/* Enhanced Language Toggle */}
-                        <div className="flex items-center justify-between p-6 bg-gradient-to-r from-amber-100/50 to-blue-100/50 rounded-xl border border-amber-200/50">
-                            <span className="text-lg font-semibold text-gray-700">
-                                {isArabicLocale ? 'اللغة' : 'Language'}
-                            </span>
-                            <div className="flex items-center space-x-3">
-                                <button
-                                    type="button"
-                                    onClick={() => setShowEnglish(false)}
-                                    className={`px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
-                                        !showEnglish
-                                            ? 'bg-gradient-to-r from-amber-600 to-red-700 text-white shadow-lg'
-                                            : 'text-gray-600 hover:text-amber-700 hover:bg-amber-50'
-                                    }`}
-                                >
-                                    العربية
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setShowEnglish(true)}
-                                    className={`px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
-                                        showEnglish
-                                            ? 'bg-gradient-to-r from-amber-600 to-red-700 text-white shadow-lg'
-                                            : 'text-gray-600 hover:text-amber-700 hover:bg-amber-50'
-                                    }`}
-                                >
-                                    English
-                                </button>
-                            </div>
-                        </div>
+
 
                         {/* Question Fields */}
                         <div className="space-y-6">
                             {/* Arabic Question */}
-                            <div className={`space-y-4 ${showEnglish ? 'opacity-50' : ''}`}>
+                            <div className={`space-y-4`}>
                                 <label className="block text-lg font-semibold text-gray-700">
-                                    {isArabicLocale ? 'السؤال بالعربية' : 'Question in Arabic'}
+                                    {isArabicLocale ? 'السؤال' : 'Question'}
                                 </label>
                                 <textarea
-                                    value={data.question_ar}
-                                    onChange={(e) => setData('question_ar', e.target.value)}
+                                    value={data.question}
+                                    onChange={(e) => setData('question', e.target.value)}
                                     rows={4}
                                     className="w-full border-2 border-amber-200 rounded-xl px-4 py-3 focus:ring-4 focus:ring-amber-500/20 focus:border-amber-500 bg-white/80 backdrop-blur-sm transition-all duration-200 resize-none"
                                     placeholder={isArabicLocale ? 'اكتب سؤالك هنا...' : 'Write your question here...'}
                                 />
-                                {errors.question_ar && (
-                                    <p className="text-red-600 text-sm">{errors.question_ar}</p>
-                                )}
-                            </div>
-
-                            {/* English Question */}
-                            <div className={`space-y-4 ${!showEnglish ? 'opacity-50' : ''}`}>
-                                <label className="block text-lg font-semibold text-gray-700">
-                                    {isArabicLocale ? 'السؤال بالإنجليزية' : 'Question in English'}
-                                </label>
-                                <textarea
-                                    value={data.question_en}
-                                    onChange={(e) => setData('question_en', e.target.value)}
-                                    rows={4}
-                                    className="w-full border-2 border-amber-200 rounded-xl px-4 py-3 focus:ring-4 focus:ring-amber-500/20 focus:border-amber-500 bg-white/80 backdrop-blur-sm transition-all duration-200 resize-none"
-                                    placeholder="Write your question here..."
-                                />
-                                {errors.question_en && (
-                                    <p className="text-red-600 text-sm">{errors.question_en}</p>
+                                {errors.question && (
+                                    <p className="text-red-600 text-sm">{errors.question}</p>
                                 )}
                             </div>
                         </div>
 
-                        {/* Additional Fields */}
-                        <div className="grid md:grid-cols-2 gap-6">
-                            <div className="space-y-2">
-                                <label className="block text-sm font-semibold text-gray-700">
-                                    {isArabicLocale ? 'اسم المرسل' : 'Submitter Name'}
-                                </label>
-                                <input
-                                    type="text"
-                                    value={data.submitter_name}
-                                    onChange={(e) => setData('submitter_name', e.target.value)}
-                                    className="w-full border-2 border-amber-200 rounded-xl px-4 py-3 focus:ring-4 focus:ring-amber-500/20 focus:border-amber-500 bg-white/80 backdrop-blur-sm transition-all duration-200"
-                                    placeholder={isArabicLocale ? 'اسمك الكامل' : 'Your full name'}
-                                />
-                                {errors.submitter_name && (
-                                    <p className="text-red-600 text-sm">{errors.submitter_name}</p>
-                                )}
-                            </div>
 
-                            <div className="space-y-2">
-                                <label className="block text-sm font-semibold text-gray-700">
-                                    {isArabicLocale ? 'البريد الإلكتروني' : 'Email'}
-                                </label>
-                                <input
-                                    type="email"
-                                    value={data.submitter_email}
-                                    onChange={(e) => setData('submitter_email', e.target.value)}
-                                    className="w-full border-2 border-amber-200 rounded-xl px-4 py-3 focus:ring-4 focus:ring-amber-500/20 focus:border-amber-500 bg-white/80 backdrop-blur-sm transition-all duration-200"
-                                    placeholder={isArabicLocale ? 'بريدك الإلكتروني' : 'Your email address'}
-                                />
-                                {errors.submitter_email && (
-                                    <p className="text-red-600 text-sm">{errors.submitter_email}</p>
-                                )}
-                            </div>
-                        </div>
 
                         <div className="grid md:grid-cols-2 gap-6">
-                            <div className="space-y-2">
-                                <label className="block text-sm font-semibold text-gray-700">
-                                    {isArabicLocale ? 'اسفار الكتاب المقدس' : 'Bible Book'}
-                                </label>
-                                <select
-                                    value={data.bible_book_id}
-                                    onChange={(e) => setData('bible_book_id', e.target.value)}
-                                    className="w-full border-2 border-amber-200 rounded-xl px-4 py-3 focus:ring-4 focus:ring-amber-500/20 focus:border-amber-500 bg-white/80 backdrop-blur-sm transition-all duration-200"
-                                >
-                                    <option value="">{isArabicLocale ? 'اخترالسفر' : 'Select Bible Book'}</option>
-                                    {bibleBooks.map((book) => (
-                                        <option key={book.id} value={book.id}>
-                                            {getLocalizedName(book)}
-                                        </option>
-                                    ))}
-                                </select>
-                                {errors.bible_book_id && (
-                                    <p className="text-red-600 text-sm">{errors.bible_book_id}</p>
-                                )}
-                            </div>
+
 
                             <div className="space-y-2">
                                 <label className="block text-sm font-semibold text-gray-700">
@@ -230,22 +158,21 @@ export default function QuestionCreate({ bibleBooks, topics }: PageProps) {
                                     <p className="text-red-600 text-sm">{errors.topic_id}</p>
                                 )}
                             </div>
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="block text-sm font-semibold text-gray-700">
-                                {isArabicLocale ? 'الفصل والآية (اختياري)' : 'Chapter & Verse (Optional)'}
-                            </label>
-                            <input
-                                type="text"
-                                value={data.chapter_verse}
-                                onChange={(e) => setData('chapter_verse', e.target.value)}
-                                className="w-full border-2 border-amber-200 rounded-xl px-4 py-3 focus:ring-4 focus:ring-amber-500/20 focus:border-amber-500 bg-white/80 backdrop-blur-sm transition-all duration-200"
-                                placeholder={isArabicLocale ? 'مثال: يوحنا 3:16' : 'Example: John 3:16'}
-                            />
-                            {errors.chapter_verse && (
-                                <p className="text-red-600 text-sm">{errors.chapter_verse}</p>
-                            )}
+                            <div className="space-y-2">
+                                <label className="block text-sm font-semibold text-gray-700">
+                                    {isArabicLocale ? 'البريد الإلكتروني' : 'Email'}
+                                </label>
+                                <input
+                                    type="email"
+                                    value={data.email}
+                                    onChange={(e) => setData('email', e.target.value)}
+                                    className="w-full border-2 border-amber-200 rounded-xl px-4 py-3 focus:ring-4 focus:ring-amber-500/20 focus:border-amber-500 bg-white/80 backdrop-blur-sm transition-all duration-200"
+                                    placeholder={isArabicLocale ? 'بريدك الإلكتروني (اختياري)' : 'Your email address (Optional)'}
+                                />
+                                {errors.email && (
+                                    <p className="text-red-600 text-sm">{errors.email}</p>
+                                )}
+                            </div>
                         </div>
 
                         {/* Submit Button */}

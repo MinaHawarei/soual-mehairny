@@ -1,10 +1,10 @@
 import { Link, usePage } from '@inertiajs/react';
-import { 
-    Home, 
-    MessageSquare, 
-    BookOpen, 
-    Tag, 
-    Users, 
+import {
+    Home,
+    MessageSquare,
+    BookOpen,
+    Tag,
+    Users,
     Settings,
     ChevronDown
 } from 'lucide-react';
@@ -17,13 +17,19 @@ interface AdminNavigationProps {
 export default function AdminNavigation({ className = '' }: AdminNavigationProps) {
     const [isOpen, setIsOpen] = useState(false);
     const { url } = usePage();
-    
+
     const navigation = [
         {
             name: 'Dashboard',
             href: route('admin.dashboard'),
             icon: Home,
             current: url === route('admin.dashboard'),
+        },
+        {
+            name: 'Reserved Questions',
+            href: route('admin.ask.index'),
+            icon: MessageSquare,
+            current: url.startsWith('/ask'),
         },
         {
             name: 'Questions',
@@ -45,10 +51,9 @@ export default function AdminNavigation({ className = '' }: AdminNavigationProps
         },
         {
             name: 'Users',
-            href: '#',
+            href: route('admin.users.index'),
             icon: Users,
-            current: false,
-            disabled: true,
+            current: url.startsWith('/admin/users'),
         },
         {
             name: 'Settings',
@@ -67,7 +72,7 @@ export default function AdminNavigation({ className = '' }: AdminNavigationProps
                         <div className="flex-shrink-0 flex items-center">
                             <span className="text-lg font-semibold text-gray-900">Admin Panel</span>
                         </div>
-                        
+
                         {/* Desktop Navigation */}
                         <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
                             {navigation.map((item) => {

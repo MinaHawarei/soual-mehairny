@@ -8,8 +8,6 @@ interface PageProps {
         id: number;
         question_ar: string;
         question_en: string;
-        submitter_name_ar: string | null;
-        submitter_name_en: string | null;
         answer_ar: string | null;
         answer_en: string | null;
         youtube_video_id: string | null;
@@ -50,8 +48,6 @@ export default function AdminQuestionsEdit({ question, bibleBooks, topics }: Pag
     const { data, setData, post, processing, errors } = useForm({
         question_ar: question.question_ar,
         question_en: question.question_en,
-        submitter_name_ar: question.submitter_name_ar || '',
-        submitter_name_en: question.submitter_name_en || '',
         answer_ar: question.answer_ar || '',
         answer_en: question.answer_en || '',
         youtube_video_id: question.youtube_video_id || '',
@@ -145,7 +141,7 @@ export default function AdminQuestionsEdit({ question, bibleBooks, topics }: Pag
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         {/* Edit Form */}
                         <div className="lg:col-span-2">
                             <form onSubmit={handleSubmit} className="space-y-6">
@@ -189,46 +185,6 @@ export default function AdminQuestionsEdit({ question, bibleBooks, topics }: Pag
                                         </div>
                                     </div>
                                 </div>
-                                {/* Author Section */}
-                                <div className="bg-white shadow rounded-lg p-6">
-                                    <h3 className="text-lg font-medium text-gray-900 mb-4">Author Details</h3>
-
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div>
-                                            <label htmlFor="submitter_name_ar" className="block text-sm font-medium text-gray-700 mb-2">
-                                                Author (Arabic) *
-                                            </label>
-                                            <textarea
-                                                id="submitter_name_ar"
-                                                rows={1}
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                                                value={data.submitter_name_ar}
-                                                onChange={(e) => setData('submitter_name_ar', e.target.value)}
-                                                required
-                                            />
-                                            {errors.submitter_name_ar && (
-                                                <p className="mt-1 text-sm text-red-600">{errors.submitter_name_ar}</p>
-                                            )}
-                                        </div>
-
-                                        <div>
-                                            <label htmlFor="submitter_name_en" className="block text-sm font-medium text-gray-700 mb-2">
-                                                Author (English) *
-                                            </label>
-                                            <textarea
-                                                id="submitter_name_en"
-                                                rows={1}
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                                                value={data.submitter_name_en}
-                                                onChange={(e) => setData('submitter_name_en', e.target.value)}
-                                                required
-                                            />
-                                            {errors.submitter_name_en && (
-                                                <p className="mt-1 text-sm text-red-600">{errors.submitter_name_en}</p>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
 
                                 {/* Answer Section */}
                                 <div className="bg-white shadow rounded-lg p-6">
@@ -241,7 +197,7 @@ export default function AdminQuestionsEdit({ question, bibleBooks, topics }: Pag
                                             </label>
                                             <textarea
                                                 id="answer_ar"
-                                                rows={10}
+                                                rows={6}
                                                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                                                 value={data.answer_ar}
                                                 onChange={(e) => setData('answer_ar', e.target.value)}
@@ -258,7 +214,7 @@ export default function AdminQuestionsEdit({ question, bibleBooks, topics }: Pag
                                             </label>
                                             <textarea
                                                 id="answer_en"
-                                                rows={10}
+                                                rows={6}
                                                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                                                 value={data.answer_en}
                                                 onChange={(e) => setData('answer_en', e.target.value)}
