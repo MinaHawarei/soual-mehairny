@@ -31,6 +31,7 @@ class QuestionController extends Controller
         $bibleBooks = BibleBook::orderBy('order')->get();
         $topics = Topic::orderBy('name_' . app()->getLocale())->get();
 
+
         return Inertia::render('Questions/Index', [
             'questions' => $questions,
             'bibleBooks' => $bibleBooks,
@@ -50,6 +51,8 @@ class QuestionController extends Controller
         if ($question->status !== 'approved') {
             abort(404);
         }
+        $question->answer_ar = str_replace(["\r\n", "\r", "\n"], "\n", $question->answer_ar);
+        $question->answer_en = str_replace(["\r\n", "\r", "\n"], "\n", $question->answer_en);
 
         return Inertia::render('Questions/Show', [
             'question' => $question,

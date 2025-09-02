@@ -51,6 +51,10 @@ class QuestionController extends Controller
         $bibleBooks = BibleBook::orderBy('order')->get();
         $topics = Topic::orderBy('name_' . app()->getLocale())->get();
 
+        $question->answer_ar = str_replace(["\r\n", "\r", "\n"], "\n", $question->answer_ar);
+        $question->answer_en = str_replace(["\r\n", "\r", "\n"], "\n", $question->answer_en);
+
+
         return Inertia::render('Admin/Questions/Show', [
             'question' => $question,
             'bibleBooks' => $bibleBooks,
@@ -74,16 +78,27 @@ class QuestionController extends Controller
         $validated = $request->validate([
             'question_ar' => 'required|string|max:2000',
             'question_en' => 'required|string|max:2000',
-            'submitter_name' => 'nullable|string|max:255',
+            'answer_ar' => 'required|string',
+            'answer_en' => 'required|string',
+            'submitter_name_ar' => 'required|string|max:255',
+            'submitter_name_en' => 'required|string|max:255',
             'submitter_email' => 'nullable|email|max:255',
             'bible_book_id' => 'nullable|exists:bible_books,id',
             'topic_id' => 'nullable|exists:topics,id',
             'chapter_verse' => 'nullable|string|max:100',
         ]);
 
-        Question::create($validated);
+        $question = Question::create($validated);
 
-        return redirect()->route('questions.index');
+        $question->load(['bibleBook', 'topic']);
+        $bibleBooks = BibleBook::orderBy('order')->get();
+        $topics = Topic::orderBy('name_' . app()->getLocale())->get();
+
+        return Inertia::render('Admin/Questions/Show', [
+            'question' => $question,
+            'bibleBooks' => $bibleBooks,
+            'topics' => $topics,
+        ]);
     }
 
 
@@ -92,6 +107,9 @@ class QuestionController extends Controller
         $question->load(['bibleBook', 'topic']);
         $bibleBooks = BibleBook::orderBy('order')->get();
         $topics = Topic::orderBy('name_' . app()->getLocale())->get();
+
+        $question->answer_ar = str_replace(["\r\n", "\r", "\n"], "\n", $question->answer_ar);
+        $question->answer_en = str_replace(["\r\n", "\r", "\n"], "\n", $question->answer_en);
 
         return Inertia::render('Admin/Questions/Edit', [
             'question' => $question,
@@ -107,6 +125,8 @@ class QuestionController extends Controller
             'question_en' => 'required|string',
             'answer_ar' => 'nullable|string',
             'answer_en' => 'nullable|string',
+            'submitter_name_ar' => 'required|string|max:255',
+            'submitter_name_en' => 'required|string|max:255',
             'youtube_video_id' => 'nullable|string',
             'status' => 'required|in:approved,disable',
             'bible_book_id' => 'nullable|exists:bible_books,id',

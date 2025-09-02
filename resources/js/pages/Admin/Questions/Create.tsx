@@ -31,7 +31,7 @@ export default function AdminQuestionsCreate({ bibleBooks, topics }: PageProps) 
         bible_book_id: null as number | null,
         topic_id: null as number | null,
         chapter_verse: '',
-        status: 'approved' as 'pending' | 'approved' | 'rejected',
+        status: 'approved' as 'approved' | 'disable',
     });
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -40,7 +40,7 @@ export default function AdminQuestionsCreate({ bibleBooks, topics }: PageProps) 
     };
 
     const getLocalizedName = (item: { name_ar: string; name_en: string }) => {
-        return window.location.pathname.includes('/ar') ? item.name_ar : item.name_en;
+        return window.location.pathname.includes('/ar') ? item.name_ar : item.name_ar;
     };
 
     return (
@@ -76,7 +76,7 @@ export default function AdminQuestionsCreate({ bibleBooks, topics }: PageProps) 
                         </p>
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         {/* Create Form */}
                         <div className="lg:col-span-2">
                             <form onSubmit={handleSubmit} className="space-y-6">
@@ -134,7 +134,7 @@ export default function AdminQuestionsCreate({ bibleBooks, topics }: PageProps) 
                                             </label>
                                             <textarea
                                                 id="answer_ar"
-                                                rows={6}
+                                                rows={10}
                                                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                                                 value={data.answer_ar}
                                                 onChange={(e) => setData('answer_ar', e.target.value)}
@@ -152,7 +152,7 @@ export default function AdminQuestionsCreate({ bibleBooks, topics }: PageProps) 
                                             </label>
                                             <textarea
                                                 id="answer_en"
-                                                rows={6}
+                                                rows={10}
                                                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                                                 value={data.answer_en}
                                                 onChange={(e) => setData('answer_en', e.target.value)}
@@ -320,34 +320,23 @@ export default function AdminQuestionsCreate({ bibleBooks, topics }: PageProps) 
                                             <input
                                                 type="radio"
                                                 name="status"
-                                                value="pending"
-                                                checked={data.status === 'pending'}
-                                                onChange={(e) => setData('status', e.target.value as 'pending' | 'approved' | 'rejected')}
-                                                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300"
-                                            />
-                                            <span className="ml-3 text-sm font-medium text-gray-700">Pending Review</span>
-                                        </label>
-                                        <label className="flex items-center">
-                                            <input
-                                                type="radio"
-                                                name="status"
                                                 value="approved"
                                                 checked={data.status === 'approved'}
-                                                onChange={(e) => setData('status', e.target.value as 'pending' | 'approved' | 'rejected')}
+                                                onChange={(e) => setData('status', e.target.value as 'approved' | 'disable')}
                                                 className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300"
                                             />
-                                            <span className="ml-3 text-sm font-medium text-gray-700">Approved (Recommended)</span>
+                                            <span className="ml-3 text-sm font-medium text-gray-700">Enable (Recommended)</span>
                                         </label>
                                         <label className="flex items-center">
                                             <input
                                                 type="radio"
                                                 name="status"
-                                                value="rejected"
-                                                checked={data.status === 'rejected'}
-                                                onChange={(e) => setData('status', e.target.value as 'pending' | 'approved' | 'rejected')}
+                                                value="disable"
+                                                checked={data.status === 'disable'}
+                                                onChange={(e) => setData('status', e.target.value as 'approved' | 'disable')}
                                                 className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300"
                                             />
-                                            <span className="ml-3 text-sm font-medium text-gray-700">Rejected</span>
+                                            <span className="ml-3 text-sm font-medium text-gray-700">Disabl</span>
                                         </label>
                                     </div>
                                 </div>

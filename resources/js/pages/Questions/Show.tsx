@@ -130,6 +130,30 @@ export default function QuestionShow({ question }: PageProps) {
 
                 </div>
 
+                {/* Enhanced Video Section */}
+                {question.youtube_video_id && (
+                    <div className="bg-gradient-to-br from-red-50 to-pink-50 rounded-2xl shadow-xl border border-red-200/50 p-8 mb-8 backdrop-blur-sm">
+                        <div className="flex items-center justify-center space-x-3 mb-6">
+                            <Play className="h-6 w-6 text-red-600" />
+                            <h2 className="text-2xl font-bold text-gray-900">
+                                {isArabicLocale ? 'فيديو شرح' : 'Explanation Video'}
+                            </h2>
+                        </div>
+
+                        <div className="aspect-video rounded-xl overflow-hidden border border-red-200/50">
+                            <iframe
+                                width="100%"
+                                height="100%"
+                                src={`https://www.youtube.com/embed/${question.youtube_video_id.split('&')[0]}`}
+                                title={getLocalizedQuestion()}
+                                frameBorder="0"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowFullScreen
+                            ></iframe>
+                        </div>
+                    </div>
+                )}
+
                 {/* Enhanced Answer Section */}
                 {question.answer_ar || question.answer_en ? (
                     <div className="bg-gradient-to-br from-white to-blue-50/50 rounded-2xl shadow-xl border border-blue-200/50 p-8 mb-8 backdrop-blur-sm">
@@ -147,7 +171,7 @@ export default function QuestionShow({ question }: PageProps) {
                             />
                         </div>
 
-                        <div className="prose prose-lg max-w-none text-gray-700 leading-relaxed">
+                        <div className="prose prose-lg max-w-none text-gray-700 leading-relaxed" style={{ whiteSpace: 'pre-line' }}>
                             <p className="text-lg leading-relaxed">
                                 {getLocalizedAnswer()}
                             </p>
@@ -177,29 +201,7 @@ export default function QuestionShow({ question }: PageProps) {
                     </div>
                 )}
 
-                {/* Enhanced Video Section */}
-                {question.youtube_video_id && (
-                    <div className="bg-gradient-to-br from-red-50 to-pink-50 rounded-2xl shadow-xl border border-red-200/50 p-8 mb-8 backdrop-blur-sm">
-                        <div className="flex items-center justify-center space-x-3 mb-6">
-                            <Play className="h-6 w-6 text-red-600" />
-                            <h2 className="text-2xl font-bold text-gray-900">
-                                {isArabicLocale ? 'فيديو شرح' : 'Explanation Video'}
-                            </h2>
-                        </div>
 
-                        <div className="aspect-video rounded-xl overflow-hidden border border-red-200/50">
-                            <iframe
-                                width="100%"
-                                height="100%"
-                                src={`https://www.youtube.com/embed/${question.youtube_video_id.split('&')[0]}`}
-                                title={getLocalizedQuestion()}
-                                frameBorder="0"
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                allowFullScreen
-                            ></iframe>
-                        </div>
-                    </div>
-                )}
 
                 {/* Enhanced Action Buttons */}
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">

@@ -20,6 +20,7 @@ class TopicsController extends Controller
             ->withCount('questions')
             ->orderBy('name_en');
 
+
         // Search functionality
         if ($request->filled('search')) {
             $search = $request->get('search');
@@ -52,7 +53,6 @@ class TopicsController extends Controller
         }
 
         $topics = $query->get();
-
         return Inertia::render('Admin/Topics/Index', [
             'topics' => $topics,
             'filters' => $request->only(['search', 'sort']),

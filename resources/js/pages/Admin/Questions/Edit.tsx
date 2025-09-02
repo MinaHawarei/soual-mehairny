@@ -69,7 +69,7 @@ export default function AdminQuestionsEdit({ question, bibleBooks, topics }: Pag
     };
 
     const getLocalizedName = (item: { name_ar: string; name_en: string }) => {
-        return window.location.pathname.includes('/ar') ? item.name_ar : item.name_en;
+        return window.location.pathname.includes('/ar') ? item.name_ar : item.name_ar;
     };
 
     const getStatusBadge = (status: string) => {
