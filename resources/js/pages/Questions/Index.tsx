@@ -1,10 +1,23 @@
+
 import { Link, usePage } from '@inertiajs/react';
-import { Search, Filter, BookOpen, Tag } from 'lucide-react';
+import { Search, BookOpen, Tag, X } from 'lucide-react';
 import PublicLayout from '@/layouts/public-layout';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { router } from '@inertiajs/react';
 import { route } from 'ziggy-js';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { OrthodoxCard } from '@/components/ui/orthodox-card';
+import { Badge } from '@/components/ui/badge';
 
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
 
 interface Question {
     id: number;
@@ -64,7 +77,6 @@ export default function QuestionsIndex({ questions, bibleBooks, topics, filters 
     const [searchQuery, setSearchQuery] = useState(filters.search || '');
     const [selectedBibleBook, setSelectedBibleBook] = useState(filters.bible_book_id || '');
     const [selectedTopic, setSelectedTopic] = useState(filters.topic_id || '');
-    const [showFilters, setShowFilters] = useState(false);
 
     const isArabic = window.location.pathname.includes('/ar');
     const localePrefix = isArabic ? '/ar' : '/en';
@@ -77,10 +89,14 @@ export default function QuestionsIndex({ questions, bibleBooks, topics, filters 
     const updateFilters = () => {
         const params = new URLSearchParams();
         if (searchQuery) params.append('search', searchQuery);
-        if (selectedBibleBook) params.append('bible_book_id', selectedBibleBook);
-        if (selectedTopic) params.append('topic_id', selectedTopic);
+        if (selectedBibleBook && selectedBibleBook !== 'all') params.append('bible_book_id', selectedBibleBook);
+        if (selectedTopic && selectedTopic !== 'all') params.append('topic_id', selectedTopic);
 
-        router.visit(`${localePrefix}/questions?${params.toString()}`);
+        router.visit(`${localePrefix}/questions?${params.toString()}`, {
+            method: 'get',
+            preserveState: true,
+            replace: true,
+        });
     };
 
     const clearFilters = () => {
@@ -102,230 +118,211 @@ export default function QuestionsIndex({ questions, bibleBooks, topics, filters 
         return isArabic ? question.answer_ar : question.answer_en;
     };
 
+    const isFirstRun = useRef(true);
+
+    useEffect(() => {
+        if (isFirstRun.current) {
+            isFirstRun.current = false;
+            return;
+        }
+        updateFilters();
+    }, [selectedBibleBook, selectedTopic]);
+
     return (
         <PublicLayout>
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="space-y-12">
                 {/* Header */}
-                <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900 mb-4">
+                <div className="text-center space-y-4">
+                    <h1 className="text-4xl font-heading font-bold text-primary tracking-tight">
                         {isArabic ? 'الأسئلة العقائدية' : 'Doctrinal Questions'}
                     </h1>
-                    <p className="text-gray-600">
+                    <p className="text-muted-foreground max-w-2xl mx-auto text-lg leading-relaxed">
                         {isArabic
-                            ? 'استكشف مجموعة شاملة من الأسئلة والإجابات العقائدية'
-                            : 'Explore our comprehensive collection of doctrinal questions and answers'
+                            ? 'استكشف مجموعة شاملة من الأسئلة والإجابات حول الإيمان والعقيدة.'
+                            : 'Explore our comprehensive collection of doctrinal questions and answers.'
                         }
                     </p>
                 </div>
 
-                {/* Search and Filters */}
-                <div className="bg-white rounded-lg shadow-sm border p-6 mb-8">
-                    <form onSubmit={handleSearch} className="space-y-4">
-                        <div className="flex flex-col md:flex-row gap-4">
-                            <div className="flex-1">
-                                <div className="relative">
-                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                                    <input
-                                        type="text"
-                                        value={searchQuery}
-                                        onChange={(e) => setSearchQuery(e.target.value)}
-                                        placeholder={isArabic ? 'ابحث في الأسئلة والإجابات...' : 'Search questions and answers...'}
-                                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                    />
-                                </div>
-                            </div>
-                            <button
-                                type="submit"
-                                className="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
-                            >
-                                {isArabic ? 'بحث' : 'Search'}
-                            </button>
+                {/* Search & Filter Bar */}
+                <div className="bg-card border border-border rounded-2xl p-6 md:p-8 space-y-6 max-w-3xl mx-auto">
+                    <form onSubmit={handleSearch} className="flex gap-4">
+                        <div className="relative flex-1">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-5 w-5" />
+                            <Input
+                                type="text"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                placeholder={isArabic ? 'ابحث عن سؤال...' : 'Search for a question...'}
+                                className="pl-10 h-12 text-lg bg-background"
+                            />
                         </div>
-
-                        {/* Filters Toggle */}
-                        <div className="flex items-center justify-between">
-                            <button
-                                type="button"
-                                onClick={() => setShowFilters(!showFilters)}
-                                className="flex items-center space-x-2 text-gray-600 hover:text-gray-900"
-                            >
-                                <Filter className="h-4 w-4" />
-                                <span>{isArabic ? 'فلاتر إضافية' : 'Additional Filters'}</span>
-                            </button>
-
-                            {(filters.search || filters.bible_book_id || filters.topic_id) && (
-                                <button
-                                    type="button"
-                                    onClick={clearFilters}
-                                    className="text-red-600 hover:text-red-700 text-sm"
-                                >
-                                    {isArabic ? 'مسح الفلاتر' : 'Clear Filters'}
-                                </button>
-                            )}
-                        </div>
-
-                        {/* Filters */}
-                        {showFilters && (
-                            <div className="grid md:grid-cols-2 gap-4 pt-4 border-t">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        {isArabic ? 'اسفار الكتاب المقدس' : 'Bible Books'}
-                                    </label>
-                                    <select
-                                        value={selectedBibleBook}
-                                        onChange={(e) => setSelectedBibleBook(e.target.value)}
-                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                    >
-                                        <option value="">{isArabic ? 'كل أسفار الكتاب المقدس' : 'All Bible Books'}</option>
-                                        {bibleBooks.map((book) => (
-                                            <option key={book.id} value={book.id}>
-                                                {getLocalizedName(book)}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        {isArabic ? 'الموضوع' : 'Topic'}
-                                    </label>
-                                    <select
-                                        value={selectedTopic}
-                                        onChange={(e) => setSelectedTopic(e.target.value)}
-                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                    >
-                                        <option value="">{isArabic ? 'جميع المواضيع' : 'All Topics'}</option>
-                                        {topics.map((topic) => (
-                                            <option key={topic.id} value={topic.id}>
-                                                {getLocalizedName(topic)}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                            </div>
-                        )}
+                        <Button type="submit" size="lg" className="h-12 px-8">
+                            {isArabic ? 'بحث' : 'Search'}
+                        </Button>
                     </form>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Select
+                            value={selectedBibleBook}
+                            onValueChange={setSelectedBibleBook}
+                        >
+                            <SelectTrigger className="w-full h-12 bg-background">
+                                <SelectValue placeholder={isArabic ? 'كل أسفار الكتاب المقدس' : 'All Bible Books'} />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">
+                                    {isArabic ? 'كل أسفار الكتاب المقدس' : 'All Bible Books'}
+                                </SelectItem>
+                                {bibleBooks.map((book) => (
+                                    <SelectItem key={book.id} value={String(book.id)}>
+                                        {getLocalizedName(book)}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+
+                        <Select
+                            value={selectedTopic}
+                            onValueChange={setSelectedTopic}
+                        >
+                            <SelectTrigger className="w-full h-12 bg-background">
+                                <SelectValue placeholder={isArabic ? 'جميع المواضيع' : 'All Topics'} />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">
+                                    {isArabic ? 'جميع المواضيع' : 'All Topics'}
+                                </SelectItem>
+                                {topics.map((topic) => (
+                                    <SelectItem key={topic.id} value={String(topic.id)}>
+                                        {getLocalizedName(topic)}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    {(filters.search || filters.bible_book_id || filters.topic_id) && (
+                        <div className="flex justify-end">
+                            <Button
+                                variant="ghost"
+                                onClick={clearFilters}
+                                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                            >
+                                <X className="h-4 w-4 mr-2" />
+                                {isArabic ? 'مسح الفلاتر' : 'Clear Filters'}
+                            </Button>
+                        </div>
+                    )}
                 </div>
 
                 {/* Results Count */}
-                <div className="mb-6">
-                    <p className="text-gray-600">
+                <div className="text-center">
+                    <span className="text-sm text-muted-foreground bg-secondary/50 px-3 py-1 rounded-full">
                         {isArabic
                             ? `تم العثور على ${questions.total} سؤال`
                             : `Found ${questions.total} questions`
                         }
-                    </p>
+                    </span>
                 </div>
 
                 {/* Questions Grid */}
-                <div className="grid gap-6">
+                <div className="space-y-6">
                     {questions.data.map((question) => (
-                        <div key={question.id} className="bg-white rounded-lg shadow-sm border p-6 hover:shadow-md transition-shadow">
-                            <div className="flex items-start justify-between mb-4">
-                                <div className="flex-1">
-                                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                                       <Link
+                        <OrthodoxCard key={question.id} className="hover:border-gold transition-all duration-300 group">
+                            <CardContent className="p-6 md:p-8">
+                                <div className="flex flex-col gap-4">
+                                    <div className="space-y-3">
+                                        <div className="flex flex-wrap gap-2">
+                                            {question.topic && (
+                                                <Badge variant="outline" className="font-normal text-muted-foreground group-hover:text-primary group-hover:border-primary/30 transition-colors">
+                                                    <Tag className="h-3 w-3 mr-1" />
+                                                    {getLocalizedName(question.topic)}
+                                                </Badge>
+                                            )}
+                                            {question.bible_book && (
+                                                <Badge variant="outline" className="font-normal text-muted-foreground group-hover:text-primary group-hover:border-primary/30 transition-colors">
+                                                    <BookOpen className="h-3 w-3 mr-1" />
+                                                    {getLocalizedName(question.bible_book)}
+                                                </Badge>
+                                            )}
+                                        </div>
+
+                                        <Link
                                             href={route('questions.show', { locale: isArabic ? 'ar' : 'en', question: question.id })}
-                                            className="hover:text-blue-600 transition-colors"
+                                            className="block"
                                         >
-                                            {getLocalizedQuestion(question)}
+                                            <h3 className="text-2xl font-heading font-bold text-foreground group-hover:text-primary transition-colors leading-relaxed">
+                                                {getLocalizedQuestion(question)}
+                                            </h3>
                                         </Link>
 
-                                    </h3>
-
-                                    {question.answer_ar || question.answer_en ? (
-                                        <p className="text-gray-600 mb-4 line-clamp-3">
-                                            {getLocalizedAnswer(question)}
+                                        <p className="text-muted-foreground line-clamp-3 leading-loose">
+                                            {question.answer_ar || question.answer_en
+                                                ? getLocalizedAnswer(question)
+                                                : (isArabic ? 'قريبًا...' : 'Coming soon...')
+                                            }
                                         </p>
-                                    ) : (
-                                        <p className="text-gray-500 italic mb-4">
-                                            {isArabic ? 'لم يتم الرد على هذا السؤال بعد' : 'This question has not been answered yet'}
-                                        </p>
-                                    )}
+                                    </div>
 
-                                    {/* Meta Information */}
-                                    <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
-                                        {question.bible_book && (
-                                            <div className="flex items-center space-x-1">
-                                                <BookOpen className="h-4 w-4" />
-                                                <span>{getLocalizedName(question.bible_book)}</span>
-                                            </div>
-                                        )}
+                                    <div className="flex items-center justify-between pt-4 border-t border-border/50">
+                                        <div className="text-sm text-muted-foreground">
+                                            {new Date(question.created_at).toLocaleDateString(isArabic ? 'ar-EG' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                        </div>
 
-                                        {question.topic && (
-                                            <div className="flex items-center space-x-1">
-                                                <Tag className="h-4 w-4" />
-                                                <span>{getLocalizedName(question.topic)}</span>
-                                            </div>
-                                        )}
-
-                                        <span>
-                                            {isArabic ? 'تم النشر في' : 'Published on'} {new Date(question.created_at).toLocaleDateString()}
-                                        </span>
+                                        <Button variant="link" className="p-0 h-auto text-primary font-bold" asChild>
+                                            <Link href={route('questions.show', [isArabic ? 'ar' : 'en', question.id])}>
+                                                {isArabic ? 'اقرأ الإجابة الكاملة' : 'Read Full Answer'} &rarr;
+                                            </Link>
+                                        </Button>
                                     </div>
                                 </div>
-                            </div>
-
-                            <div className="flex justify-between items-center">
-                                <Link
-                                    href={route('questions.show', [isArabic ? 'ar' : 'en', question.id])}
-                                    className="text-blue-600 hover:text-blue-700 font-medium"
-                                >
-                                    {isArabic ? 'اقرأ المزيد' : 'Read More'}
-                                </Link>
-                                {question.submitter_name_ar && (
-                                    <span className="text-sm text-gray-500 bg-gray-100 px-4 py-2 rounded-full">
-                                        {isArabic ? `بواسطة ${question.submitter_name_ar}` : `By ${question.submitter_name_en}`}
-
-                                    </span>
-                                )}
-                            </div>
-                        </div>
+                            </CardContent>
+                        </OrthodoxCard>
                     ))}
                 </div>
 
                 {/* Pagination */}
                 {questions.last_page > 1 && (
-                    <div className="mt-8 flex justify-center">
-                        <nav className="flex space-x-2">
+                    <div className="flex justify-center pt-8">
+                        <nav className="flex flex-wrap gap-2 justify-center">
                             {questions.links.map((link: any, index: number) => (
                                 <Link
                                     key={index}
                                     href={link.url || '#'}
-                                    className={`px-3 py-2 rounded-md text-sm font-medium ${
-                                        link.active
-                                            ? 'bg-blue-600 text-white'
-                                            : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
-                                    } ${!link.url ? 'cursor-not-allowed opacity-50' : ''}`}
+                                    className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${link.active
+                                        ? 'bg-primary text-primary-foreground'
+                                        : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
+                                        } ${!link.url ? 'pointer-events-none opacity-50' : ''}`}
                                     {...(!link.url && { onClick: (e) => e.preventDefault() })}
                                 >
-                                        <span dangerouslySetInnerHTML={{ __html: link.label }} />
+                                    <span dangerouslySetInnerHTML={{ __html: link.label }} />
                                 </Link>
                             ))}
                         </nav>
                     </div>
                 )}
 
-                {/* No Results */}
+                {/* Empty State */}
                 {questions.data.length === 0 && (
-                    <div className="text-center py-12">
-                        <div className="text-gray-400 mb-4">
-                            <Search className="h-16 w-16 mx-auto" />
+                    <div className="text-center py-20 bg-secondary/20 rounded-2xl border border-dashed border-border">
+                        <div className="bg-background w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm border border-border">
+                            <Search className="h-8 w-8 text-muted-foreground" />
                         </div>
-                        <h3 className="text-lg font-medium text-gray-900 mb-2">
-                            {isArabic ? 'لا توجد نتائج' : 'No Results Found'}
+                        <h3 className="text-xl font-heading font-semibold text-foreground mb-2">
+                            {isArabic ? 'لم يتم العثور على أسئلة' : 'No Questions Found'}
                         </h3>
-                        <p className="text-gray-600 mb-6">
+                        <p className="text-muted-foreground mb-8 max-w-md mx-auto">
                             {isArabic
-                                ? 'جرب تعديل معايير البحث أو الفلاتر'
-                                : 'Try adjusting your search criteria or filters'
+                                ? 'لم نجد أي أسئلة تطابق بحثك. هل تود طرح سؤال جديد؟'
+                                : 'We couldn\'t find any questions matching your search. Would you like to ask a new one?'
                             }
                         </p>
-                        <Link
-                            href={`${localePrefix}/questions/create`}
-                            className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
-                        >
-                            {isArabic ? 'أرسل سؤالاً جديداً' : 'Submit a New Question'}
-                        </Link>
+                        <Button asChild size="lg">
+                            <Link href={`${localePrefix}/questions/create`}>
+                                {isArabic ? 'أرسل سؤالاً جديداً' : 'Submit a New Question'}
+                            </Link>
+                        </Button>
                     </div>
                 )}
             </div>
