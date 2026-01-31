@@ -123,18 +123,23 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
             </main>
 
             {/* Footer */}
-            <footer className="border-t border-border mt-auto py-12 bg-secondary/30">
-                <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-                    <div className="flex flex-col items-center gap-4">
-                        <CopticCrossIcon className="text-primary/50 h-6 w-6" size={24} />
-                        <p className="text-muted-foreground text-sm font-reading opacity-80">
+            <footer className="border-t border-border/70 mt-16 bg-secondary/20">
+                <div className="max-w-4xl mx-auto px-4 py-6">
+                    <div className="flex flex-col items-center gap-2">
+                        <CopticCrossIcon
+                            className="text-primary/40 h-5 w-5"
+                            size={20}
+                        />
+
+                        <p className="text-muted-foreground text-xs font-reading opacity-80 text-center">
                             {currentLocale === 'ar'
-                                ? '© 2026 سؤال محيرني. جميع الحقوق محفوظة.'
-                                : '© 2026 Soual Mehairny. All rights reserved.'}
+                                ? `© ${new Date().getFullYear()} سؤال محيرني. جميع الحقوق محفوظة.`
+                                : `© ${new Date().getFullYear()} Soual Mehairny. All rights reserved.`}
                         </p>
                     </div>
                 </div>
             </footer>
+
         </div>
     );
 }
