@@ -30,7 +30,7 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
     return (
         <div className="min-h-screen bg-background text-foreground font-sans selection:bg-accent/20">
             {/* Navigation */}
-            <nav className="border-b border-border bg-background/80 backdrop-blur-md sticky top-0 z-50">
+            <nav className="border-b border-ornament/40 bg-background/95 backdrop-blur-md sticky top-0 z-50 shadow-sm">
                 <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between h-16 items-center">
                         {/* Logo */}

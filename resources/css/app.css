@@ -174,8 +174,46 @@
 
     body {
         @apply bg-background text-foreground;
+        background-color: rgb(var(--paper-2));
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
     }
 }
+
+/* Custom Scrollbar for Parchment Theme */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgb(var(--paper));
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgb(var(--ornament));
+    border-radius: 5px;
+    border: 2px solid rgb(var(--paper));
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgb(var(--gold));
+}
+
+/* Reading Prose adjustments */
+.prose-reading {
+    @apply text-lg leading-loose;
+    font-family: var(--font-body);
+}
+
+.prose-reading p {
+    margin-bottom: 1.5em;
+    text-align: justify;
+}
+
+.rtl .prose-reading p {
+    text-align: justify;
+}
+
 
 /* RTL Support for Arabic Language */
 .rtl {
