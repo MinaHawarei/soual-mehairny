@@ -130,12 +130,18 @@ export default function QuestionShow({ question }: PageProps) {
 
     const answerText = localizedAnswer || '';
     const answerExcerpt = useMemo(() => {
-        if (!answerText) {
-            return '';
+        if (!answerText) return '';
+
+        const cleaned = answerText.replace(/\s+/g, ' ').trim();
+        const maxLength = 140;
+
+        if (cleaned.length <= maxLength) {
+            return cleaned;
         }
 
-        return answerText.replace(/\s+/g, ' ').trim().slice(0, 140);
+        return cleaned.slice(0, maxLength).replace(/\s+\S*$/, '') + '…';
     }, [answerText]);
+
 
     const showToast = useCallback((message: string) => {
         setToastMessage(message);
@@ -178,25 +184,35 @@ export default function QuestionShow({ question }: PageProps) {
     }, []);
 
     const handleShare = useCallback(async () => {
-        const title = localizedQuestion;
+        const title = localizedQuestion?.trim() || (isArabicLocale ? 'سؤال' : 'Question');
         const url = typeof window !== 'undefined' ? window.location.href : '';
-        const text = answerExcerpt ? answerExcerpt : (isArabicLocale ? 'إجابة مميزة لسؤالك.' : 'A thoughtful answer to your question.');
+
+        const excerpt =
+            (answerExcerpt || '').trim() ||
+            (isArabicLocale ? 'إجابة مميزة لسؤالك.' : 'A thoughtful answer to your question.');
+
+        const shareText = isArabicLocale
+            ? `${title}\n\n${excerpt}\n\n لمتابعة القراءة: ${url}`
+            : `${title}\n\n${excerpt}\n\n Continue reading: ${url}`;
+
 
         try {
+            // Mobile share sheet (if available)
             if (typeof navigator !== 'undefined' && navigator.share) {
                 await navigator.share({
                     title,
-                    text,
+                    text: shareText,
                     url
                 });
                 return;
             }
 
-            await copyToClipboard(url);
-            showToast(isArabicLocale ? 'تم نسخ الرابط' : 'Link copied');
+            // Desktop fallback: copy the full message (not URL only)
+            await copyToClipboard(shareText);
+            showToast(isArabicLocale ? 'تم نسخ نص المشاركة' : 'Share text copied');
         } catch (error) {
-            await copyToClipboard(url);
-            showToast(isArabicLocale ? 'تم نسخ الرابط' : 'Link copied');
+            await copyToClipboard(shareText);
+            showToast(isArabicLocale ? 'تم نسخ نص المشاركة' : 'Share text copied');
         }
     }, [answerExcerpt, copyToClipboard, isArabicLocale, localizedQuestion, showToast]);
 
