@@ -1,23 +1,23 @@
-
-import { Link, usePage } from '@inertiajs/react';
+import { Link, router } from '@inertiajs/react';
 import { Search, BookOpen, Tag, X } from 'lucide-react';
 import PublicLayout from '@/layouts/public-layout';
-import { useState, useEffect, useRef } from 'react';
-import { router } from '@inertiajs/react';
-import { route } from 'ziggy-js';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { OrthodoxCard } from '@/components/ui/orthodox-card';
 import { Badge } from '@/components/ui/badge';
-
 import {
     Select,
     SelectContent,
     SelectItem,
     SelectTrigger,
     SelectValue,
-} from "@/components/ui/select"
+} from '@/components/ui/select';
+import { apiGet } from '@/lib/api-client';
+import { getCurrentLocale } from '@/lib/locale';
+import { getNativeError, isNativeApp } from '@/lib/platform';
+import { notifyLocal } from '@/lib/notifications';
 
 interface Question {
     id: number;
@@ -59,6 +59,19 @@ interface Filters {
     topic_id?: string;
 }
 
+interface PaginationMeta {
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+}
+
+interface PaginationLink {
+    label: string;
+    page: number | null;
+    active: boolean;
+}
+
 interface PageProps {
     questions: {
         data: Question[];
@@ -73,37 +86,216 @@ interface PageProps {
     filters: Filters;
 }
 
+type QuestionsApiResponse = {
+    data: Question[];
+    meta: PaginationMeta;
+    filters: Filters;
+    bible_books: BibleBook[];
+    topics: Topic[];
+};
+
+const buildNativeLinks = (meta: PaginationMeta): PaginationLink[] => {
+    if (meta.last_page <= 1) {
+        return [];
+    }
+
+    const links: PaginationLink[] = [];
+    const current = meta.current_page;
+
+    links.push({
+        label: '&laquo;',
+        page: current > 1 ? current - 1 : null,
+        active: false,
+    });
+
+    for (let page = 1; page <= meta.last_page; page += 1) {
+        links.push({
+            label: String(page),
+            page,
+            active: page === current,
+        });
+    }
+
+    links.push({
+        label: '&raquo;',
+        page: current < meta.last_page ? current + 1 : null,
+        active: false,
+    });
+
+    return links;
+};
+
 export default function QuestionsIndex({ questions, bibleBooks, topics, filters }: PageProps) {
+    const native = isNativeApp();
+    const nativeError = getNativeError();
+    const [nativeData, setNativeData] = useState({
+        questions,
+        bibleBooks,
+        topics,
+        filters,
+    });
+    const [loading, setLoading] = useState(native && !nativeError);
+    const [error, setError] = useState<string | null>(nativeError);
+
     const [searchQuery, setSearchQuery] = useState(filters.search || '');
     const [selectedBibleBook, setSelectedBibleBook] = useState(filters.bible_book_id || '');
     const [selectedTopic, setSelectedTopic] = useState(filters.topic_id || '');
 
-    const isArabic = window.location.pathname.includes('/ar');
+    const locale = getCurrentLocale();
+    const isArabic = locale === 'ar';
     const localePrefix = isArabic ? '/ar' : '/en';
 
-    const handleSearch = (e: React.FormEvent) => {
-        e.preventDefault();
-        updateFilters();
-    };
+    const activeQuestions = native ? nativeData.questions : questions;
+    const activeBibleBooks = native ? nativeData.bibleBooks : bibleBooks;
+    const activeTopics = native ? nativeData.topics : topics;
 
-    const updateFilters = () => {
-        const params = new URLSearchParams();
-        if (searchQuery) params.append('search', searchQuery);
-        if (selectedBibleBook && selectedBibleBook !== 'all') params.append('bible_book_id', selectedBibleBook);
-        if (selectedTopic && selectedTopic !== 'all') params.append('topic_id', selectedTopic);
+    const lastTotalRef = useRef(activeQuestions.total || 0);
+    const requestControllerRef = useRef<AbortController | null>(null);
 
-        router.visit(`${localePrefix}/questions?${params.toString()}`, {
-            method: 'get',
-            preserveState: true,
-            replace: true,
-        });
-    };
+    const buildParams = useCallback(
+        (page: number | undefined, overrides: Partial<Filters> = {}) => {
+            const params = new URLSearchParams();
+            const search = overrides.search ?? searchQuery;
+            const bibleBook = overrides.bible_book_id ?? selectedBibleBook;
+            const topic = overrides.topic_id ?? selectedTopic;
+
+            if (search) params.append('search', search);
+            if (bibleBook && bibleBook !== 'all') params.append('bible_book_id', bibleBook);
+            if (topic && topic !== 'all') params.append('topic_id', topic);
+            if (page && page > 1) params.append('page', String(page));
+
+            return params;
+        },
+        [searchQuery, selectedBibleBook, selectedTopic],
+    );
+
+    const updateUrl = useCallback(
+        (params: URLSearchParams) => {
+            const query = params.toString();
+            const target = query ? `${localePrefix}/questions?${query}` : `${localePrefix}/questions`;
+            window.history.replaceState({}, '', target);
+        },
+        [localePrefix],
+    );
+
+    const fetchQuestions = useCallback(
+        async (params: URLSearchParams) => {
+            if (!native || nativeError) {
+                return;
+            }
+
+            requestControllerRef.current?.abort();
+            const controller = new AbortController();
+            requestControllerRef.current = controller;
+
+            const apiParams = new URLSearchParams(params);
+            apiParams.set('locale', locale);
+            apiParams.set('per_page', String(activeQuestions.per_page || 5));
+
+            setLoading(true);
+            setError(null);
+
+            try {
+                const response = await apiGet<QuestionsApiResponse>(
+                    `/api/native/questions?${apiParams.toString()}`,
+                    {
+                        signal: controller.signal,
+                        cacheKey: `questions:${apiParams.toString()}`,
+                        cacheTtlMs: 15000,
+                        retries: 2,
+                    },
+                );
+
+                setNativeData({
+                    questions: {
+                        data: response.data,
+                        current_page: response.meta.current_page,
+                        last_page: response.meta.last_page,
+                        per_page: response.meta.per_page,
+                        total: response.meta.total,
+                        links: buildNativeLinks(response.meta),
+                    },
+                    bibleBooks: response.bible_books,
+                    topics: response.topics,
+                    filters: response.filters,
+                });
+
+                if (lastTotalRef.current > 0 && response.meta.total > lastTotalRef.current) {
+                    notifyLocal({
+                        title: isArabic ? 'تمت إضافة إجابات جديدة' : 'New answers are available',
+                        body: isArabic
+                            ? 'تم تحديث قاعدة الأسئلة لدينا.'
+                            : 'Your questions feed has been updated.',
+                    });
+                }
+
+                lastTotalRef.current = response.meta.total;
+            } catch (err) {
+                if (err instanceof DOMException && err.name === 'AbortError') {
+                    return;
+                }
+                const message = err instanceof Error ? err.message : 'Unable to load questions.';
+                setError(message);
+            } finally {
+                setLoading(false);
+            }
+        },
+        [activeQuestions.per_page, isArabic, locale, native, nativeError],
+    );
+
+    useEffect(() => {
+        return () => {
+            requestControllerRef.current?.abort();
+        };
+    }, []);
+
+    const applyFilters = useCallback(
+        (page = 1, overrides: Partial<Filters> = {}) => {
+            const params = buildParams(page, overrides);
+
+            if (native) {
+                updateUrl(params);
+                fetchQuestions(params);
+                return;
+            }
+
+            router.visit(`${localePrefix}/questions?${params.toString()}`, {
+                method: 'get',
+                preserveState: true,
+                replace: true,
+            });
+        },
+        [buildParams, fetchQuestions, localePrefix, native, updateUrl],
+    );
 
     const clearFilters = () => {
         setSearchQuery('');
         setSelectedBibleBook('');
         setSelectedTopic('');
+
+        if (native) {
+            const params = new URLSearchParams();
+            updateUrl(params);
+            fetchQuestions(params);
+            return;
+        }
+
         router.visit(`${localePrefix}/questions`);
+    };
+
+    const handleSearch = (e: React.FormEvent) => {
+        e.preventDefault();
+        applyFilters(1);
+    };
+
+    const handleBibleBookChange = (value: string) => {
+        setSelectedBibleBook(value);
+        applyFilters(1, { bible_book_id: value });
+    };
+
+    const handleTopicChange = (value: string) => {
+        setSelectedTopic(value);
+        applyFilters(1, { topic_id: value });
     };
 
     const getLocalizedName = (item: { name_ar: string; name_en: string }) => {
@@ -121,12 +313,34 @@ export default function QuestionsIndex({ questions, bibleBooks, topics, filters 
     const isFirstRun = useRef(true);
 
     useEffect(() => {
-        if (isFirstRun.current) {
-            isFirstRun.current = false;
+        if (!native || nativeError) {
             return;
         }
-        updateFilters();
-    }, [selectedBibleBook, selectedTopic]);
+
+        if (isFirstRun.current) {
+            isFirstRun.current = false;
+            const pageParam =
+                typeof window !== 'undefined'
+                    ? Number(new URLSearchParams(window.location.search).get('page') ?? 1)
+                    : 1;
+            const params = buildParams(pageParam || activeQuestions.current_page || 1);
+            fetchQuestions(params);
+            return;
+        }
+    }, [buildParams, fetchQuestions, native, nativeError]);
+
+    const paginationLinks = useMemo(
+        () => (native ? (activeQuestions.links as PaginationLink[]) : activeQuestions.links),
+        [activeQuestions.links, native],
+    );
+
+    const handlePageClick = (page: number | null) => {
+        if (!page || page === activeQuestions.current_page) {
+            return;
+        }
+
+        applyFilters(page);
+    };
 
     return (
         <PublicLayout>
@@ -139,10 +353,15 @@ export default function QuestionsIndex({ questions, bibleBooks, topics, filters 
                     <p className="text-muted-foreground max-w-2xl mx-auto text-lg leading-relaxed">
                         {isArabic
                             ? 'استكشف مجموعة شاملة من الأسئلة والإجابات حول الإيمان والعقيدة.'
-                            : 'Explore our comprehensive collection of doctrinal questions and answers.'
-                        }
+                            : 'Explore our comprehensive collection of doctrinal questions and answers.'}
                     </p>
                 </div>
+
+                {error && (
+                    <div className="mx-auto max-w-3xl rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+                        {error}
+                    </div>
+                )}
 
                 {/* Search & Filter Bar */}
                 <div className="bg-card border border-border rounded-2xl p-6 md:p-8 space-y-6 max-w-3xl mx-auto">
@@ -155,18 +374,16 @@ export default function QuestionsIndex({ questions, bibleBooks, topics, filters 
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 placeholder={isArabic ? 'ابحث عن سؤال...' : 'Search for a question...'}
                                 className="pl-10 h-12 text-lg bg-background"
+                                disabled={native && loading}
                             />
                         </div>
-                        <Button type="submit" size="lg" className="h-12 px-8">
+                        <Button type="submit" size="lg" className="h-12 px-8" disabled={native && loading}>
                             {isArabic ? 'بحث' : 'Search'}
                         </Button>
                     </form>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <Select
-                            value={selectedBibleBook}
-                            onValueChange={setSelectedBibleBook}
-                        >
+                        <Select value={selectedBibleBook} onValueChange={handleBibleBookChange} disabled={native && loading}>
                             <SelectTrigger className="w-full h-12 bg-background">
                                 <SelectValue placeholder={isArabic ? 'كل أسفار الكتاب المقدس' : 'All Bible Books'} />
                             </SelectTrigger>
@@ -174,7 +391,7 @@ export default function QuestionsIndex({ questions, bibleBooks, topics, filters 
                                 <SelectItem value="all">
                                     {isArabic ? 'كل أسفار الكتاب المقدس' : 'All Bible Books'}
                                 </SelectItem>
-                                {bibleBooks.map((book) => (
+                                {activeBibleBooks.map((book) => (
                                     <SelectItem key={book.id} value={String(book.id)}>
                                         {getLocalizedName(book)}
                                     </SelectItem>
@@ -182,18 +399,13 @@ export default function QuestionsIndex({ questions, bibleBooks, topics, filters 
                             </SelectContent>
                         </Select>
 
-                        <Select
-                            value={selectedTopic}
-                            onValueChange={setSelectedTopic}
-                        >
+                        <Select value={selectedTopic} onValueChange={handleTopicChange} disabled={native && loading}>
                             <SelectTrigger className="w-full h-12 bg-background">
                                 <SelectValue placeholder={isArabic ? 'جميع المواضيع' : 'All Topics'} />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="all">
-                                    {isArabic ? 'جميع المواضيع' : 'All Topics'}
-                                </SelectItem>
-                                {topics.map((topic) => (
+                                <SelectItem value="all">{isArabic ? 'جميع المواضيع' : 'All Topics'}</SelectItem>
+                                {activeTopics.map((topic) => (
                                     <SelectItem key={topic.id} value={String(topic.id)}>
                                         {getLocalizedName(topic)}
                                     </SelectItem>
@@ -202,7 +414,7 @@ export default function QuestionsIndex({ questions, bibleBooks, topics, filters 
                         </Select>
                     </div>
 
-                    {(filters.search || filters.bible_book_id || filters.topic_id) && (
+                    {(searchQuery || selectedBibleBook || selectedTopic) && (
                         <div className="flex justify-end">
                             <Button
                                 variant="ghost"
@@ -218,111 +430,97 @@ export default function QuestionsIndex({ questions, bibleBooks, topics, filters 
 
                 {/* Results Count */}
                 <div className="text-center">
-                    <span className="text-sm text-muted-foreground bg-secondary/50 px-3 py-1 rounded-full">
-                        {isArabic
-                            ? `تم العثور على ${questions.total} سؤال`
-                            : `Found ${questions.total} questions`
-                        }
-                    </span>
+                    <p className="text-muted-foreground text-lg font-medium">
+                        {loading && native
+                            ? isArabic
+                                ? 'جارٍ تحميل الأسئلة...'
+                                : 'Loading questions...'
+                            : isArabic
+                                ? `تم العثور على ${activeQuestions.total} سؤال`
+                                : `${activeQuestions.total} questions found`}
+                    </p>
                 </div>
 
                 {/* Questions Grid */}
-                <div className="space-y-6">
-                    {questions.data.map((question) => (
-                        <OrthodoxCard key={question.id} className="hover:border-gold transition-all duration-300 group">
-                            <CardContent className="p-6 md:p-8">
-                                <div className="flex flex-col gap-4">
-                                    <div className="space-y-3">
-                                        <div className="flex flex-wrap gap-2">
-                                            {question.topic && (
-                                                <Badge variant="outline" className="font-normal text-muted-foreground group-hover:text-primary group-hover:border-primary/30 transition-colors">
-                                                    <Tag className="h-3 w-3 mr-1" />
-                                                    {getLocalizedName(question.topic)}
-                                                </Badge>
-                                            )}
-                                            {question.bible_book && (
-                                                <Badge variant="outline" className="font-normal text-muted-foreground group-hover:text-primary group-hover:border-primary/30 transition-colors">
-                                                    <BookOpen className="h-3 w-3 mr-1" />
-                                                    {getLocalizedName(question.bible_book)}
-                                                </Badge>
-                                            )}
-                                        </div>
-
-                                        <Link
-                                            href={route('questions.show', { locale: isArabic ? 'ar' : 'en', question: question.id })}
-                                            className="block"
-                                        >
-                                            <h3 className="text-2xl font-heading font-bold text-foreground group-hover:text-primary transition-colors leading-relaxed">
-                                                {getLocalizedQuestion(question)}
-                                            </h3>
-                                        </Link>
-
-                                        <p className="text-muted-foreground line-clamp-3 leading-loose">
-                                            {question.answer_ar || question.answer_en
-                                                ? getLocalizedAnswer(question)
-                                                : (isArabic ? 'قريبًا...' : 'Coming soon...')
-                                            }
-                                        </p>
-                                    </div>
-
-                                    <div className="flex items-center justify-between pt-4 border-t border-border/50">
-                                        <div className="text-sm text-muted-foreground">
-                                            {new Date(question.created_at).toLocaleDateString(isArabic ? 'ar-EG' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' })}
-                                        </div>
-
-                                        <Button variant="link" className="p-0 h-auto text-primary font-bold" asChild>
-                                            <Link href={route('questions.show', [isArabic ? 'ar' : 'en', question.id])}>
-                                                {isArabic ? 'اقرأ الإجابة الكاملة' : 'Read Full Answer'} &rarr;
-                                            </Link>
-                                        </Button>
-                                    </div>
+                <div className="grid gap-6 md:grid-cols-1 ">
+                    {activeQuestions.data.map((question) => (
+                        <OrthodoxCard key={question.id} className="group overflow-hidden">
+                            <CardHeader className="space-y-3 p-6">
+                                <CardTitle className="text-xl font-heading font-bold text-primary group-hover:text-primary/80 transition-colors">
+                                    {getLocalizedQuestion(question)}
+                                </CardTitle>
+                                <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                                    {question.bible_book && (
+                                        <Badge variant="outline" className="border-ornament/50">
+                                            <BookOpen className="h-3 w-3 mr-2 rtl:ml-2 rtl:mr-0" />
+                                            {getLocalizedName(question.bible_book)}
+                                        </Badge>
+                                    )}
+                                    {question.topic && (
+                                        <Badge variant="outline" className="border-ornament/50">
+                                            <Tag className="h-3 w-3 mr-2 rtl:ml-2 rtl:mr-0" />
+                                            {getLocalizedName(question.topic)}
+                                        </Badge>
+                                    )}
                                 </div>
+                            </CardHeader>
+                            <CardContent className="space-y-4 p-6">
+                                <p className="text-muted-foreground font-reading leading-relaxed line-clamp-3">
+                                    {question.answer_ar || question.answer_en
+                                        ? getLocalizedAnswer(question)
+                                        : isArabic
+                                            ? 'الإجابة قيد الإعداد.'
+                                            : 'Answer is being prepared.'}
+                                </p>
+                                <Button asChild variant="ghost" className="px-0 text-primary hover:text-primary/80 p-3">
+                                    <Link href={`${localePrefix}/questions/${question.id}`}>
+                                        {isArabic ? 'اقرأ المزيد' : 'Read More'}
+                                    </Link>
+                                </Button>
                             </CardContent>
                         </OrthodoxCard>
                     ))}
                 </div>
 
                 {/* Pagination */}
-                {questions.last_page > 1 && (
-                    <div className="flex justify-center pt-8">
-                        <nav className="flex flex-wrap gap-2 justify-center">
-                            {questions.links.map((link: any, index: number) => (
-                                <Link
-                                    key={index}
-                                    href={link.url || '#'}
-                                    className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${link.active
-                                        ? 'bg-primary text-primary-foreground'
-                                        : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
-                                        } ${!link.url ? 'pointer-events-none opacity-50' : ''}`}
-                                    {...(!link.url && { onClick: (e) => e.preventDefault() })}
-                                >
-                                    <span dangerouslySetInnerHTML={{ __html: link.label }} />
-                                </Link>
-                            ))}
-                        </nav>
-                    </div>
-                )}
+                {activeQuestions.last_page > 1 && (
+                    <div className="flex justify-center">
+                        <div className="flex items-center gap-2">
+                            {paginationLinks.map((link: any, index: number) => {
+                                const isDisabled = native ? !link.page : !link.url;
 
-                {/* Empty State */}
-                {questions.data.length === 0 && (
-                    <div className="text-center py-20 bg-secondary/20 rounded-2xl border border-dashed border-border">
-                        <div className="bg-background w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm border border-border">
-                            <Search className="h-8 w-8 text-muted-foreground" />
+                                if (native) {
+                                    return (
+                                        <button
+                                            key={`${link.label}-${index}`}
+                                            type="button"
+                                            onClick={() => handlePageClick(link.page)}
+                                            disabled={isDisabled}
+                                            className={`px-3 py-2 text-sm rounded-lg border transition-colors ${link.active
+                                                ? 'bg-primary text-primary-foreground border-primary'
+                                                : 'bg-background border-border hover:bg-secondary'
+                                                } ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                        >
+                                            <span dangerouslySetInnerHTML={{ __html: link.label }} />
+                                        </button>
+                                    );
+                                }
+
+                                return (
+                                    <Link
+                                        key={index}
+                                        href={link.url || '#'}
+                                        className={`px-3 py-2 text-sm rounded-lg border transition-colors ${link.active
+                                            ? 'bg-primary text-primary-foreground border-primary'
+                                            : 'bg-background border-border hover:bg-secondary'
+                                            } ${!link.url ? 'pointer-events-none opacity-50' : ''}`}
+                                        {...(!link.url && { onClick: (e) => e.preventDefault() })}
+                                    >
+                                        <span dangerouslySetInnerHTML={{ __html: link.label }} />
+                                    </Link>
+                                );
+                            })}
                         </div>
-                        <h3 className="text-xl font-heading font-semibold text-foreground mb-2">
-                            {isArabic ? 'لم يتم العثور على أسئلة' : 'No Questions Found'}
-                        </h3>
-                        <p className="text-muted-foreground mb-8 max-w-md mx-auto">
-                            {isArabic
-                                ? 'لم نجد أي أسئلة تطابق بحثك. هل تود طرح سؤال جديد؟'
-                                : 'We couldn\'t find any questions matching your search. Would you like to ask a new one?'
-                            }
-                        </p>
-                        <Button asChild size="lg">
-                            <Link href={`${localePrefix}/questions/create`}>
-                                {isArabic ? 'أرسل سؤالاً جديداً' : 'Submit a New Question'}
-                            </Link>
-                        </Button>
                     </div>
                 )}
             </div>

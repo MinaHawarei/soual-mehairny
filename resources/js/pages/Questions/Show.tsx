@@ -1,14 +1,15 @@
 ﻿import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from '@inertiajs/react';
-import { ArrowLeft, BookOpen, Tag, Calendar, User, Play, Share2 } from 'lucide-react';
+import { ArrowLeft, BookOpen, Tag, Play, Share2 } from 'lucide-react';
 import PublicLayout from '@/layouts/public-layout';
-import { isArabic, buildLocalizedPath } from '@/lib/locale';
+import { isArabic, buildLocalizedPath, getCurrentLocale } from '@/lib/locale';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
 import { OrnamentFrame } from '@/components/ui/ornament-frame';
 import { OrnamentDivider } from '@/components/ui/ornament-divider';
 import { AuthorityCard } from '@/components/ui/authority-card';
+import { apiGet } from '@/lib/api-client';
+import { getNativeError, isNativeApp } from '@/lib/platform';
 
 interface Question {
     id: number;
@@ -43,35 +44,60 @@ interface Question {
 }
 
 interface PageProps {
-    question: Question;
+    question: Question | null;
+    questionId?: number;
 }
 
-export default function QuestionShow({ question }: PageProps) {
+export default function QuestionShow({ question: initialQuestion, questionId }: PageProps) {
+    const native = isNativeApp();
+    const nativeError = getNativeError();
+    const [question, setQuestion] = useState<Question | null>(initialQuestion ?? null);
+    const [loading, setLoading] = useState(native && !initialQuestion);
+    const [error, setError] = useState<string | null>(nativeError);
+
+    const locale = getCurrentLocale();
+    const resolvedId =
+        initialQuestion?.id ??
+        questionId ??
+        (typeof window !== 'undefined'
+            ? Number(window.location.pathname.split('/').pop())
+            : null);
+
     const isArabicLocale = isArabic();
     const [toastMessage, setToastMessage] = useState<string | null>(null);
     const toastTimeoutRef = useRef<number | null>(null);
+
+    useEffect(() => {
+        if (initialQuestion) {
+            setQuestion(initialQuestion);
+        }
+    }, [initialQuestion]);
 
     const getLocalizedName = (item: { name_ar: string; name_en: string }) => {
         return isArabicLocale ? item.name_ar : item.name_en;
     };
 
     const localizedQuestion = useMemo(() => {
+        if (!question) {
+            return '';
+        }
+
         return isArabicLocale ? question.question_ar : question.question_en;
-    }, [isArabicLocale, question.question_ar, question.question_en]);
+    }, [isArabicLocale, question]);
 
     const localizedAnswer = useMemo(() => {
-        return isArabicLocale ? question.answer_ar : question.answer_en;
-    }, [isArabicLocale, question.answer_ar, question.answer_en]);
+        if (!question) {
+            return null;
+        }
 
-    const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString(isArabicLocale ? 'ar-EG' : 'en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        });
-    };
+        return isArabicLocale ? question.answer_ar : question.answer_en;
+    }, [isArabicLocale, question]);
 
     const lecturer = useMemo(() => {
+        if (!question) {
+            return { name: '', role: '', fallback: ' ' };
+        }
+
         const defaultName = isArabicLocale ? question.submitter_name_ar : question.submitter_name_en;
         const defaultRole = '';
 
@@ -117,15 +143,7 @@ export default function QuestionShow({ question }: PageProps) {
             role: (isArabicLocale ? question.lecturer_role_ar : question.lecturer_role_en) || defaultRole,
             fallback: fallbackInitials || ' '
         };
-    }, [
-        isArabicLocale,
-        question.lecturer_name_ar,
-        question.lecturer_name_en,
-        question.lecturer_role_ar,
-        question.lecturer_role_en,
-        question.submitter_name_ar,
-        question.submitter_name_en
-    ]);
+    }, [isArabicLocale, question]);
 
 
     const answerText = localizedAnswer || '';
@@ -234,7 +252,77 @@ export default function QuestionShow({ question }: PageProps) {
         return `https://www.youtube.com/embed/${value.split('&')[0]}`;
     }, []);
 
-    const videoUrl = question.youtube_video_id ? getYoutubeEmbedUrl(question.youtube_video_id) : null;
+    const videoUrl = question?.youtube_video_id ? getYoutubeEmbedUrl(question.youtube_video_id) : null;
+
+    useEffect(() => {
+        if (!native || nativeError || !resolvedId || initialQuestion) {
+            return;
+        }
+
+        let cancelled = false;
+        const controller = new AbortController();
+
+        const loadQuestion = async () => {
+            setLoading(true);
+            setError(null);
+
+            try {
+                const response = await apiGet<{ data: Question }>(
+                    `/api/native/questions/${resolvedId}?locale=${locale}`,
+                    { signal: controller.signal, retries: 2 },
+                );
+
+                if (!cancelled) {
+                    setQuestion(response.data);
+                }
+            } catch (err) {
+                if (err instanceof DOMException && err.name === 'AbortError') {
+                    return;
+                }
+
+                if (!cancelled) {
+                    const message = err instanceof Error ? err.message : 'Unable to load question.';
+                    setError(message);
+                }
+            } finally {
+                if (!cancelled) {
+                    setLoading(false);
+                }
+            }
+        };
+
+        loadQuestion();
+
+        return () => {
+            cancelled = true;
+            controller.abort();
+        };
+    }, [initialQuestion, locale, native, nativeError, resolvedId]);
+
+    if (!question) {
+        return (
+            <PublicLayout>
+                <div className="max-w-3xl mx-auto space-y-6">
+                    <Button variant="ghost" asChild className="pl-0 text-muted-foreground hover:text-primary hover:bg-transparent">
+                        <Link href={buildLocalizedPath('questions')} className="flex items-center gap-2">
+                            <ArrowLeft className="h-4 w-4 rtl:rotate-180" />
+                            <span className="font-semibold">
+                                {isArabicLocale ? 'العودة إلى الأسئلة' : 'Back to Questions'}
+                            </span>
+                        </Link>
+                    </Button>
+
+                    <div className="rounded-2xl border border-border bg-card p-6 text-center text-muted-foreground">
+                        {error
+                            ? error
+                            : loading
+                                ? (isArabicLocale ? 'جارٍ تحميل السؤال...' : 'Loading question...')
+                                : (isArabicLocale ? 'تعذر تحميل السؤال.' : 'Unable to load the question.')}
+                    </div>
+                </div>
+            </PublicLayout>
+        );
+    }
 
     return (
         <PublicLayout>

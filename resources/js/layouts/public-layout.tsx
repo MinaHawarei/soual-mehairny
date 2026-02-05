@@ -1,4 +1,4 @@
-import { type ReactNode } from 'react';
+import { type ReactNode, useEffect } from 'react';
 import { Link, usePage } from '@inertiajs/react';
 import { Globe, Menu, X } from 'lucide-react';
 import { useState } from 'react';
@@ -10,10 +10,34 @@ interface PublicLayoutProps {
     children: ReactNode;
 }
 
+type AppNotice = {
+    title: string;
+    body?: string;
+};
+
 export default function PublicLayout({ children }: PublicLayoutProps) {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
-    const { url } = usePage();
+    const { url, props } = usePage();
     const currentLocale = getCurrentLocale();
+    const [notice, setNotice] = useState<AppNotice | null>(null);
+
+    const nativeError = (props as { nativeError?: string | null }).nativeError ?? null;
+
+    useEffect(() => {
+        const handler = (event: Event) => {
+            const detail = (event as CustomEvent<AppNotice>).detail;
+            if (detail?.title) {
+                setNotice(detail);
+                window.setTimeout(() => setNotice(null), 2500);
+            }
+        };
+
+        window.addEventListener('app:notify', handler as EventListener);
+
+        return () => {
+            window.removeEventListener('app:notify', handler as EventListener);
+        };
+    }, []);
 
     const toggleLanguage = () => {
         const newLocale = currentLocale === 'ar' ? 'en' : 'ar';
@@ -119,6 +143,11 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
 
             {/* Main Content */}
             <main className="max-w-5xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+                {nativeError && (
+                    <div className="mb-6 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+                        {nativeError}
+                    </div>
+                )}
                 {children}
             </main>
 
@@ -139,6 +168,13 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
                     </div>
                 </div>
             </footer>
+
+            {notice && (
+                <div className="fixed bottom-6 left-1/2 z-50 w-[90%] max-w-sm -translate-x-1/2 rounded-2xl border border-ornament/30 bg-paper px-4 py-3 shadow-xl">
+                    <p className="text-sm font-semibold text-foreground">{notice.title}</p>
+                    {notice.body && <p className="text-xs text-muted-foreground mt-1">{notice.body}</p>}
+                </div>
+            )}
 
         </div>
     );

@@ -18,6 +18,19 @@ class QuestionController extends Controller
         $bibleBookId = $request->get('bible_book_id');
         $topicId = $request->get('topic_id');
 
+        if (isNativeApp()) {
+            return Inertia::render('Questions/Index', [
+                'questions' => $this->emptyPagination(),
+                'bibleBooks' => [],
+                'topics' => [],
+                'filters' => [
+                    'search' => $search,
+                    'bible_book_id' => $bibleBookId,
+                    'topic_id' => $topicId,
+                ],
+            ]);
+        }
+
         $questions = Question::query()
             ->approved()
             ->with(['bibleBook', 'topic'])
@@ -46,6 +59,13 @@ class QuestionController extends Controller
 
     public function show($locale, $questionId): Response
     {
+        if (isNativeApp()) {
+            return Inertia::render('Questions/Show', [
+                'question' => null,
+                'questionId' => (int) $questionId,
+            ]);
+        }
+
         $question = Question::with(['bibleBook', 'topic'])->findOrFail($questionId);
 
         if ($question->status !== 'approved') {
@@ -62,6 +82,13 @@ class QuestionController extends Controller
 
     public function create(): Response
     {
+        if (isNativeApp()) {
+            return Inertia::render('Questions/Create', [
+                'bibleBooks' => [],
+                'topics' => [],
+            ]);
+        }
+
         $bibleBooks = BibleBook::orderBy('order')->get();
         $topics = Topic::orderBy('name_' . app()->getLocale())->get();
 
@@ -73,6 +100,10 @@ class QuestionController extends Controller
 
     public function store(Request $request)
     {
+        if (isNativeApp()) {
+            abort(409, 'Use the Native API endpoint to submit questions.');
+        }
+
         $validated = $request->validate([
             'question_ar' => 'required|string|max:2000',
             'question_en' => 'required|string|max:2000',
@@ -90,6 +121,18 @@ class QuestionController extends Controller
             ->with('success', app()->getLocale() === 'ar'
                 ? 'تم إرسال سؤالك بنجاح. سنقوم بمراجعته والرد عليه قريباً.'
                 : 'Your question has been submitted successfully. We will review and answer it soon.');
+    }
+
+    private function emptyPagination(): array
+    {
+        return [
+            'data' => [],
+            'current_page' => 1,
+            'last_page' => 1,
+            'per_page' => 5,
+            'total' => 0,
+            'links' => [],
+        ];
     }
 
 }

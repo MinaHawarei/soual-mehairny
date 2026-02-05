@@ -56,6 +56,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | NativePHP Hybrid Mode
+    |--------------------------------------------------------------------------
+    |
+    | When running inside NativePHP, the app can proxy specific routes to a
+    | remote server for database-backed data. Configure these via env vars.
+    |
+    */
+
+    'native_app' => env('NATIVE_APP', false),
+
+    'remote_app_url' => env('REMOTE_APP_URL'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |
@@ -122,5 +136,6 @@ return [
         'driver' => env('APP_MAINTENANCE_DRIVER', 'file'),
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
+
 
 ];

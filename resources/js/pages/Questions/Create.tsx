@@ -1,12 +1,15 @@
 import { Link, useForm, usePage } from '@inertiajs/react';
 import { ArrowLeft, Send, HelpCircle } from 'lucide-react';
 import PublicLayout from '@/layouts/public-layout';
-import { isArabic, buildLocalizedPath } from '@/lib/locale';
+import { isArabic, buildLocalizedPath, getCurrentLocale } from '@/lib/locale';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { OrnamentFrame } from '@/components/ui/ornament-frame';
+import { ApiError, apiGet, apiPost } from '@/lib/api-client';
+import { getNativeError, isNativeApp } from '@/lib/platform';
 import {
     Select,
     SelectContent,
@@ -41,17 +44,126 @@ type InertiaProps = {
 
 export default function QuestionCreate({ bibleBooks, topics }: PageProps) {
     const isArabicLocale = isArabic();
+    const locale = getCurrentLocale();
+    const native = isNativeApp();
+    const nativeError = getNativeError();
     const { flash } = usePage().props as InertiaProps;
 
-    const { data, setData, post, processing, errors } = useForm({
+    const [topicsState, setTopicsState] = useState<Topic[]>(topics ?? []);
+    const [loadingTopics, setLoadingTopics] = useState(native && topics.length === 0 && !nativeError);
+    const [submitError, setSubmitError] = useState<string | null>(null);
+    const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
+    const [nativeProcessing, setNativeProcessing] = useState(false);
+
+    const { data, setData, post, processing, errors, setError, clearErrors, reset } = useForm({
         question: '',
         topic_id: '',
         email: '',
     });
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const activeTopics = native ? topicsState : topics;
+    const successMessage = native ? submitSuccess : flash?.success;
+    const errorMessage = native ? submitError : flash?.error;
+    const isSubmitting = native ? nativeProcessing : processing;
+
+    useEffect(() => {
+        if (!native || nativeError) {
+            return;
+        }
+
+        if (topicsState.length > 0) {
+            return;
+        }
+
+        let cancelled = false;
+        const controller = new AbortController();
+
+        const loadTopics = async () => {
+            setLoadingTopics(true);
+            setSubmitError(null);
+
+            try {
+                const response = await apiGet<{ topics: Topic[] }>(
+                    `/api/native/questions/filters?locale=${locale}`,
+                    { signal: controller.signal, retries: 2 },
+                );
+
+                if (!cancelled) {
+                    setTopicsState(response.topics);
+                }
+            } catch (err) {
+                if (err instanceof DOMException && err.name === 'AbortError') {
+                    return;
+                }
+
+                if (!cancelled) {
+                    const message = err instanceof Error ? err.message : 'Unable to load topics.';
+                    setSubmitError(message);
+                }
+            } finally {
+                if (!cancelled) {
+                    setLoadingTopics(false);
+                }
+            }
+        };
+
+        loadTopics();
+
+        return () => {
+            cancelled = true;
+            controller.abort();
+        };
+    }, [locale, native, nativeError, topicsState.length]);
+
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        post(buildLocalizedPath('ask'));
+
+        if (!native) {
+            post(buildLocalizedPath('ask'));
+            return;
+        }
+
+        if (nativeError) {
+            setSubmitError(nativeError);
+            return;
+        }
+
+        setSubmitError(null);
+        setSubmitSuccess(null);
+        clearErrors();
+        setNativeProcessing(true);
+
+        try {
+            const response = await apiPost<{ message: string }>('/api/native/ask', {
+                question: data.question,
+                topic_id: data.topic_id || null,
+                email: data.email || null,
+                locale,
+            });
+
+            setSubmitSuccess(
+                isArabicLocale
+                    ? 'تم إرسال سؤالك بنجاح. سنراجع الطلب قريبًا.'
+                    : response.message,
+            );
+            reset();
+        } catch (err) {
+            if (err instanceof ApiError && typeof err.payload === 'object' && err.payload) {
+                const payload = err.payload as { errors?: Record<string, string[]>; message?: string };
+                if (payload.errors) {
+                    Object.entries(payload.errors).forEach(([field, messages]) => {
+                        setError(field as keyof typeof data, messages[0]);
+                    });
+                }
+
+                setSubmitError(payload.message ?? (isArabicLocale ? 'تعذر إرسال السؤال.' : 'Unable to submit question.'));
+            } else {
+                const message = err instanceof Error ? err.message : 'Unable to submit question.';
+                setSubmitError(message);
+            }
+        } finally {
+            setNativeProcessing(false);
+        }
     };
 
     const getLocalizedName = (item: { name_ar: string; name_en: string }) => {
@@ -62,15 +174,15 @@ export default function QuestionCreate({ bibleBooks, topics }: PageProps) {
         <PublicLayout>
             {/* Toast Messages */}
             <div
-                className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-md transition-all ${flash?.success
+                className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-md transition-all ${successMessage
                     ? "bg-green-100 text-green-800 border-l-4 border-green-500"
-                    : flash?.error
+                    : errorMessage
                         ? "bg-red-100 text-red-800 border-l-4 border-red-500"
                         : "hidden"
                     }`}
             >
-                {flash?.success && <span>{flash.success}</span>}
-                {flash?.error && <span>{flash.error}</span>}
+                {successMessage && <span>{successMessage}</span>}
+                {errorMessage && <span>{errorMessage}</span>}
             </div>
 
             <div className="max-w-2xl mx-auto space-y-8 pb-12">
@@ -131,12 +243,13 @@ export default function QuestionCreate({ bibleBooks, topics }: PageProps) {
                                     <Select
                                         value={data.topic_id}
                                         onValueChange={(value) => setData('topic_id', value)}
+                                        disabled={native && loadingTopics}
                                     >
                                         <SelectTrigger className="w-full h-12 text-base bg-background/50 border-ornament/50 focus:ring-primary/10">
                                             <SelectValue placeholder={isArabicLocale ? 'اختر الموضوع' : 'Select Topic'} />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            {topics.map((topic) => (
+                                            {activeTopics.map((topic) => (
                                                 <SelectItem key={topic.id} value={String(topic.id)}>
                                                     {getLocalizedName(topic)}
                                                 </SelectItem>
@@ -164,8 +277,13 @@ export default function QuestionCreate({ bibleBooks, topics }: PageProps) {
                             </div>
 
                             <div className="pt-8">
-                                <Button type="submit" size="lg" className="w-full text-lg h-14 font-bold shadow-md hover:shadow-lg transition-all bg-primary text-primary-foreground hover:bg-primary/90" disabled={processing}>
-                                    {processing ? (
+                                <Button
+                                    type="submit"
+                                    size="lg"
+                                    className="w-full text-lg h-14 font-bold shadow-md hover:shadow-lg transition-all bg-primary text-primary-foreground hover:bg-primary/90"
+                                    disabled={isSubmitting || (native && !!nativeError)}
+                                >
+                                    {isSubmitting ? (
                                         <span className="animate-pulse">{isArabicLocale ? 'جاري الإرسال...' : 'Sending...'}</span>
                                     ) : (
                                         <div className="flex items-center gap-3">

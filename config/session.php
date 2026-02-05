@@ -18,7 +18,7 @@ return [
     |
     */
 
-    'driver' => env('SESSION_DRIVER', 'database'),
+    'driver' => env('SESSION_DRIVER', env('NATIVE_APP', false) ? 'file' : 'database'),
 
     /*
     |--------------------------------------------------------------------------

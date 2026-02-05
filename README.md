@@ -100,6 +100,56 @@ A **complete and fully functional** Christian Orthodox platform built with Larav
 - **Email**: `admin@example.com`
 - **Password**: `password` (from UserFactory)
 
+## NativePHP: Local UI + Remote JSON API
+
+When packaged with NativePHP, the app renders the same Inertia UI locally, but
+fetches database-backed data from a remote HTTPS JSON API (no HTML proxying or
+remote navigation).
+
+Environment variables (local/native build):
+- `NATIVE_APP=true` Enable native mode.
+- `REMOTE_APP_URL=https://your-domain` Remote API base URL (must be HTTPS).
+- Recommended for local native: `SESSION_DRIVER=file` and `CACHE_STORE=file`.
+
+Environment variables (remote server):
+- `NATIVE_APP=false`
+- `NATIVE_APP_ALLOWED_ORIGINS` Comma-separated origins for CORS (example for
+  local native dev: `http://localhost:8000,http://127.0.0.1:8000`).
+
+Native API endpoints:
+- `GET /api/native/questions?locale=ar&page=1`
+- `GET /api/native/questions/{id}?locale=ar`
+- `GET /api/native/questions/filters?locale=ar`
+- `POST /api/native/ask`
+- `POST /api/native/auth/login`
+- `POST /api/native/auth/logout`
+- `GET /api/native/auth/me`
+
+Authentication:
+- Token-based via Laravel Sanctum (mobile/desktop friendly).
+- Run migrations on the remote server to create `personal_access_tokens`.
+
+Notifications (NativePHP mobile):
+- Install and configure the Firebase push notifications plugin if you want
+  system notifications (FCM/APNs setup required).
+- Secure token storage uses the NativePHP secure storage plugin when available.
+
+Suggested installs (NativePHP mobile):
+```bash
+composer require nativephp/mobile-firebase
+composer require nativephp/mobile-secure-storage
+php artisan native:install
+```
+
+Verification checklist:
+- Web: `/ar/questions` renders from server props, no remote API calls.
+- Native: `/ar/questions` renders locally, data loads from `https://.../api/native/*`.
+- No Mixed Content warnings in native.
+- Links stay inside the local app (Inertia links).
+- Pagination + locale filtering work in native.
+- Run `php artisan test` for automated coverage.
+
+
 ## 📁 Project Structure
 
 ```
@@ -283,3 +333,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ---
 
 **Built with ❤️ using Laravel 12 + React 19 + Inertia.js**
+

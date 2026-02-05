@@ -1,0 +1,8 @@
+[2026-02-05 19:33:15] production.ERROR: Trait "Laravel\Sanctum\HasApiTokens" not found {"exception":"[object] (Symfony\\Component\\ErrorHandler\\Error\\FatalError(code: 0): Trait \"Laravel\\Sanctum\\HasApiTokens\" not found at /home/vol18_1/infinityfree.com/if0_39684239/htdocs/app/Models/User.php:11)
+[stacktrace]
+#0 {main}
+"} 
+[2026-02-05 19:41:48] production.ERROR: Trait "Laravel\Sanctum\HasApiTokens" not found {"exception":"[object] (Symfony\\Component\\ErrorHandler\\Error\\FatalError(code: 0): Trait \"Laravel\\Sanctum\\HasApiTokens\" not found at /home/vol18_1/infinityfree.com/if0_39684239/htdocs/app/Models/User.php:11)
+[stacktrace]
+#0 {main}
+"} 

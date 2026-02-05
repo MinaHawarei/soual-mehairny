@@ -17,6 +17,18 @@ class AskController extends Controller
         $search = $request->get('search');
         $topicId = $request->get('topic_id');
 
+        if (isNativeApp()) {
+            return Inertia::render('asks/Index', [
+                'questions' => $this->emptyPagination(),
+                'bibleBooks' => [],
+                'topics' => [],
+                'filters' => [
+                    'search' => $search,
+                    'topic_id' => $topicId,
+                ],
+            ]);
+        }
+
         $questions = Ask::query()
             ->with(['topic'])
             ->when($search, fn($query) => $query->search($search))
@@ -42,6 +54,13 @@ class AskController extends Controller
 
      public function show($questionId): Response
     {
+        if (isNativeApp()) {
+            return Inertia::render('asks/Show', [
+                'question' => null,
+                'questionId' => (int) $questionId,
+            ]);
+        }
+
         $question = Ask::with(['topic'])->findOrFail($questionId);
 
         return Inertia::render('asks/Show', [
@@ -49,8 +68,14 @@ class AskController extends Controller
         ]);
     }
 
-     public function create(): Response
+      public function create(): Response
     {
+        if (isNativeApp()) {
+            return Inertia::render('Questions/Create', [
+                'topics' => [],
+            ]);
+        }
+
         $topics = Topic::orderBy('name_' . app()->getLocale())->get();
 
         return Inertia::render('Questions/Create', [
@@ -59,6 +84,10 @@ class AskController extends Controller
     }
     public function store(Request $request)
     {
+        if (isNativeApp()) {
+            abort(409, 'Use the Native API endpoint to submit questions.');
+        }
+
         $validated = $request->validate([
             'question' => 'required|string|max:2000',
             'email' => 'nullable|email|max:255',
@@ -74,6 +103,10 @@ class AskController extends Controller
     }
     public function destroy(Ask $ask)
     {
+        if (isNativeApp()) {
+            abort(409, 'Native mode does not support local mutations.');
+        }
+
         $ask->delete();
 
         return redirect()->route('admin.ask.index')
@@ -81,6 +114,10 @@ class AskController extends Controller
     }
     public function bulkDelete(Request $request)
     {
+        if (isNativeApp()) {
+            abort(409, 'Native mode does not support local mutations.');
+        }
+
         // Validate the request to ensure 'ids' is an array of valid question IDs
         $request->validate([
             'ids' => 'required|array',
@@ -93,6 +130,18 @@ class AskController extends Controller
         // Redirect back to the index page with a success message
         return redirect()->route('admin.ask.index')
             ->with('success', 'Selected questions have been deleted successfully.');
+    }
+
+    private function emptyPagination(): array
+    {
+        return [
+            'data' => [],
+            'current_page' => 1,
+            'last_page' => 1,
+            'per_page' => 12,
+            'total' => 0,
+            'links' => [],
+        ];
     }
 
 }

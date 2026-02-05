@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\QuestionController as AdminQuestionController;
 use App\Http\Controllers\Admin\DashboardController;
 
 // Admin routes (no locale prefix needed) - must come before localized routes
+// DB-backed data in NativePHP is fetched via remote JSON APIs.
 Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
@@ -37,12 +38,8 @@ Route::prefix('{locale}')->where(['locale' => 'ar|en'])->group(function () {
     Route::get('/questions/{question}', [QuestionController::class, 'show'])->name('questions.show');
     Route::get('/questions/create', [QuestionController::class, 'create'])->name('questions.create');
 
-
-
     Route::get('/ask/create', [AskController::class, 'create'])->name('ask.create');
     Route::post('/ask', [AskController::class, 'store'])->middleware('throttle:1,1')->name('ask.store');
-
-
 });
 
 // Default locale route (redirects to Arabic)
