@@ -15,3 +15,19 @@ Route::prefix('native')->group(function () {
     Route::get('/questions/{question}', [QuestionController::class, 'show']);
     Route::post('/ask', [AskController::class, 'store']);
 });
+
+Route::get('/__probe', function () {
+    return response()
+        ->json(['ok' => true])
+        ->header('X-From', 'laravel');
+});
+
+
+Route::get('/__headers', function () {
+    return response()->json([
+        'seen_origin' => request()->header('origin'),
+        'app_url' => config('app.url'),
+        'allowed_origins' => config('cors.allowed_origins'),
+        'env_native' => env('NATIVE_APP_ALLOWED_ORIGINS'),
+    ]);
+});
